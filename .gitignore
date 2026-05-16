@@ -1,0 +1,13 @@
+.env
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+*.egg-info/
+dist/
+build/
+rolesearch.db
+# output/ is committed by GitHub Actions so documents are accessible on GitHub
+# Uncomment the line below to ignore generated docs locally:
+# output/*/

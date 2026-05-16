@@ -1,0 +1,92 @@
+# ──────────────────────────────────────────────────────────────────────────────
+#  ANTHONY BAMMER — Job Search Preferences
+#  Executive-level | Social Impact | Philanthropy | Funding Strategy | Advisory
+# ──────────────────────────────────────────────────────────────────────────────
+
+# Roles aligned with Managing Partner / Strategic Advisor background
+job_titles:
+  - Chief Development Officer
+  - Vice President of Philanthropy
+  - Chief Impact Officer
+  - VP of Strategic Partnerships
+  - Managing Director
+  - Director of Strategic Partnerships
+  - VP of Social Impact
+  - Chief Strategy Officer
+  - Director of Development
+  - Executive Director
+  - VP of Government Relations
+  - Head of Philanthropy
+  - Director of Federal Funding
+  - Senior Advisor
+  - Principal
+  - VP of Nonprofit Strategy
+  - Director of Capital Strategy
+  - Chief Operating Officer
+  - VP of Community Impact
+
+# Preferred work locations — Atlanta-based or remote executive roles
+locations:
+  - Remote
+  - Atlanta, GA
+  - Washington, DC
+  - New York, NY
+
+# Employment types
+job_types:
+  - full-time
+  - contract
+
+# Industries aligned with Anthony's background
+industries:
+  - nonprofit
+  - social impact
+  - philanthropy
+  - consulting
+  - community development
+  - healthcare
+  - government
+  - federal funding
+  - behavioral health
+  - foundation
+  - policy
+
+# Minimum annual salary (executive-level)
+salary_min: 130000
+
+# Keywords that should be present in a strong match
+keywords:
+  - federal funding
+  - nonprofit
+  - philanthropy
+  - capital strategy
+  - social impact
+  - grant
+  - community development
+  - strategic partnerships
+  - fundraising
+
+# Anything here disqualifies a posting automatically
+deal_breakers:
+  - entry-level
+  - junior
+  - associate degree required
+  - unpaid
+  - cryptocurrency
+  - crypto
+  - gambling
+  - adult content
+  - MLM
+  - commission-only
+
+# Companies / orgs to skip
+excluded_companies: []
+
+# Minimum AI match score (0–100) to surface in results
+min_match_score: 60
+
+# How many top matches get auto-generated tailored resume + cover letter
+auto_generate_top_n: 5
+
+# Maximum jobs to fetch per source per run
+max_jobs_per_source: 50
