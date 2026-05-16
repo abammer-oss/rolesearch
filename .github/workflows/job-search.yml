@@ -11,6 +11,9 @@ on:
         default: 'false'
         type: boolean
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true   # opt into Node.js 24 ahead of June 2026 deadline
+
 jobs:
   search:
     runs-on: ubuntu-latest
