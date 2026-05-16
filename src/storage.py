@@ -50,6 +50,7 @@ def init_db() -> None:
                 recommendation    TEXT,
                 executive_summary TEXT DEFAULT '',
                 priority_rank     INTEGER DEFAULT 3,
+                issue_created     INTEGER DEFAULT 0,
                 matched_at        TEXT DEFAULT (datetime('now'))
             );
 
@@ -67,6 +68,7 @@ def init_db() -> None:
         _add_column_if_missing(con, "jobs", "last_checked_at", "TEXT")
         _add_column_if_missing(con, "matches", "executive_summary", "TEXT DEFAULT ''")
         _add_column_if_missing(con, "matches", "priority_rank", "INTEGER DEFAULT 3")
+        _add_column_if_missing(con, "matches", "issue_created", "INTEGER DEFAULT 0")
 
 
 def _add_column_if_missing(con: sqlite3.Connection, table: str, col: str, typedef: str) -> None:
@@ -119,6 +121,34 @@ def save_match(m: MatchResult) -> None:
                 m.recommendation, m.executive_summary, m.priority_rank,
             ),
         )
+
+
+def mark_issue_created(job_id: str) -> None:
+    with _conn() as con:
+        con.execute(
+            "UPDATE matches SET issue_created=1 WHERE job_id=?", (job_id,)
+        )
+
+
+def get_new_matches_for_notification(limit: int = 20) -> list[dict]:
+    """Return top matches that haven't had a GitHub Issue created yet."""
+    with _conn() as con:
+        rows = con.execute(
+            """SELECT m.job_id, m.score, m.reasoning, m.key_matches, m.gaps,
+                      m.recommendation, m.executive_summary, m.priority_rank,
+                      m.issue_created, m.matched_at,
+                      j.title, j.company, j.location, j.url, j.salary,
+                      j.job_type, j.source, j.remote, j.posted_at
+               FROM matches m
+               JOIN jobs j ON j.id = m.job_id
+               WHERE m.recommendation != 'skip'
+                 AND j.is_active = 1
+                 AND m.issue_created = 0
+               ORDER BY m.priority_rank ASC, m.score DESC
+               LIMIT ?""",
+            (limit,),
+        ).fetchall()
+    return [dict(r) for r in rows]
 
 
 def mark_job_liveness(job_id: str, is_active: bool) -> None:

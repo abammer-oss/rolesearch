@@ -8,5 +8,6 @@ venv/
 dist/
 build/
 rolesearch.db
-output/*/
-!output/.gitkeep
+# output/ is committed by GitHub Actions so documents are accessible on GitHub
+# Uncomment the line below to ignore generated docs locally:
+# output/*/

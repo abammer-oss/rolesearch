@@ -94,6 +94,46 @@ def cmd_generate(job_id: str) -> None:
         _show_docs(docs)
 
 
+def cmd_ci() -> None:
+    """Run in GitHub Actions: search, score, and open Issues for new top matches."""
+    import os
+    from agent import RoleSearchAgent
+    from src.storage import get_new_matches_for_notification, mark_issue_created, init_db
+    from src.notifier import notify_new_matches
+
+    init_db()
+    repo = os.getenv("GITHUB_REPO", "")
+    if not repo:
+        print("ERROR: GITHUB_REPO environment variable not set.")
+        sys.exit(1)
+
+    print("=" * 60)
+    print("RoleSearch — GitHub Actions CI Run")
+    print("=" * 60)
+
+    agent = RoleSearchAgent()
+
+    print("\n[1/3] Fetching and validating jobs…")
+    agent.refresh(console=None)
+
+    print("\n[2/3] Checking for new matches to report…")
+    new_matches = get_new_matches_for_notification(limit=20)
+    print(f"      Found {len(new_matches)} new match(es) needing notification.")
+
+    if not new_matches:
+        print("\nNothing new to report. All done.")
+        return
+
+    print(f"\n[3/3] Opening GitHub Issues in {repo}…")
+    created = notify_new_matches(new_matches)
+
+    # Mark them so we don't re-notify on the next run
+    for m in new_matches:
+        mark_issue_created(m["job_id"])
+
+    print(f"\nDone — {created} issue(s) opened.")
+
+
 def cmd_daemon() -> None:
     from apscheduler.schedulers.blocking import BlockingScheduler
     from agent import RoleSearchAgent
@@ -335,6 +375,8 @@ def main() -> None:
         cmd_generate(args[1])
     elif cmd == "daemon":
         cmd_daemon()
+    elif cmd == "ci":
+        cmd_ci()
     else:
         console.print(f"[red]Unknown command: {cmd}[/]")
         console.print(__doc__)
