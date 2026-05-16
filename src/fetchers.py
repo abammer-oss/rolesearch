@@ -149,6 +149,14 @@ def fetch_adzuna(prefs: JobPreferences) -> list[JobPosting]:
     if not app_id or not app_key:
         return []
 
+    # Adzuna validates the Referer header against the domain registered with the app
+    referrer = os.getenv("ADZUNA_REFERRER", "https://abammer.com")
+    adzuna_session = requests.Session()
+    adzuna_session.headers.update({
+        "User-Agent": "rolesearch-agent/1.0",
+        "Referer": referrer,
+    })
+
     jobs: list[JobPosting] = []
     country = "us"
     for title in prefs.job_titles[:2]:
@@ -164,9 +172,16 @@ def fetch_adzuna(prefs: JobPreferences) -> list[JobPosting]:
         for loc in prefs.locations[:1]:
             if loc.lower() != "remote":
                 params["where"] = loc
-        data = _get(
-            f"https://api.adzuna.com/v1/api/jobs/{country}/search/1", params
-        )
+        try:
+            r = adzuna_session.get(
+                f"https://api.adzuna.com/v1/api/jobs/{country}/search/1",
+                params=params, timeout=15,
+            )
+            r.raise_for_status()
+            data = r.json()
+        except Exception as exc:
+            logger.warning("Adzuna request failed: %s", exc)
+            data = None
         if not data:
             continue
         for j in data.get("results", []):
@@ -196,12 +211,97 @@ def fetch_adzuna(prefs: JobPreferences) -> list[JobPosting]:
     return deduped[: prefs.max_jobs_per_source]
 
 
+# ── The Muse (free, no auth — strong nonprofit/philanthropy coverage) ──────────
+
+# Categories on The Muse that match Anthony's profile
+_MUSE_CATEGORIES = [
+    "Fundraising & Development",
+    "Social Services",
+    "Management & Operations",
+    "Business Development",
+    "Strategy",
+    "Project & Program Management",
+]
+
+_MUSE_LEVELS = ["Senior Level", "Management", "Director", "Executive"]
+
+
+def fetch_themuse(prefs: JobPreferences) -> list[JobPosting]:
+    jobs: list[JobPosting] = []
+    seen: set[str] = set()
+
+    for category in _MUSE_CATEGORIES:
+        for level in _MUSE_LEVELS[:2]:  # Senior + Management to keep request count low
+            page = 0
+            while len(jobs) < prefs.max_jobs_per_source:
+                data = _get(
+                    "https://www.themuse.com/api/public/jobs",
+                    {"category": category, "level": level, "page": page, "descending": "true"},
+                )
+                if not data:
+                    break
+                results = data.get("results", [])
+                if not results:
+                    break
+                for j in results:
+                    jid = _make_id("themuse", str(j.get("id", "")))
+                    if jid in seen:
+                        continue
+                    seen.add(jid)
+
+                    locations = j.get("locations", [])
+                    location = locations[0].get("name", "Remote") if locations else "Remote"
+                    remote = not locations or any(
+                        "remote" in loc.get("name", "").lower() for loc in locations
+                    )
+
+                    # The Muse returns HTML in contents — strip tags for description
+                    raw_contents = j.get("contents", "") or ""
+                    description = _strip_html(raw_contents) or j.get("name", "")
+
+                    landing = j.get("refs", {}).get("landing_page", "")
+
+                    jobs.append(JobPosting(
+                        id=jid,
+                        title=j.get("name", ""),
+                        company=j.get("company", {}).get("name", ""),
+                        location=location,
+                        url=landing,
+                        description=description,
+                        salary=None,
+                        job_type="full-time",
+                        source="themuse",
+                        posted_at=j.get("publication_date") or None,
+                        tags=[c.get("name", "") for c in j.get("categories", [])],
+                        remote=remote,
+                    ))
+
+                if page >= data.get("page_count", 1) - 1:
+                    break
+                page += 1
+                time.sleep(0.3)
+
+    logger.info("themuse: fetched %d jobs", len(jobs))
+    return jobs[:prefs.max_jobs_per_source]
+
+
+def _strip_html(html: str) -> str:
+    """Remove HTML tags for clean plain-text description."""
+    import re
+    text = re.sub(r"<[^>]+>", " ", html)
+    text = re.sub(r"&nbsp;", " ", text)
+    text = re.sub(r"&amp;", "&", text)
+    text = re.sub(r"&lt;", "<", text)
+    text = re.sub(r"&gt;", ">", text)
+    return re.sub(r"\s+", " ", text).strip()
+
+
 # ── Public entry point ────────────────────────────────────────────────────────
 
 def fetch_all_jobs(prefs: JobPreferences) -> list[JobPosting]:
     """Fetch from all configured sources and deduplicate by ID."""
     all_jobs: list[JobPosting] = []
-    for fetcher in (fetch_arbeitnow, fetch_remotive, fetch_jobicy, fetch_adzuna):
+    for fetcher in (fetch_arbeitnow, fetch_remotive, fetch_jobicy, fetch_themuse, fetch_adzuna):
         try:
             all_jobs.extend(fetcher(prefs))
         except Exception as exc:
