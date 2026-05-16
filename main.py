@@ -27,11 +27,11 @@ from rich.table import Table
 from rich.text import Text
 
 load_dotenv()
-logging.basicConfig(level=logging.WARNING, format="%(levelname)s: %(message)s")
+logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 
 console = Console()
 
-# ── Tier config ────────────────────────────────────────────────────────────────────────────────
+# ── Tier config ─────────────────────────────────────────────────────────────────────────────────
 
 _TIERS = {
     1: ("APPLY IMMEDIATELY", "bold green", "🚀"),
@@ -40,7 +40,7 @@ _TIERS = {
 }
 
 
-# ── Commands ────────────────────────────────────────────────────────────────────────────────
+# ── Commands ─────────────────────────────────────────────────────────────────────────────────
 
 def cmd_search() -> None:
     from agent import RoleSearchAgent
@@ -86,7 +86,7 @@ def cmd_generate(job_id: str) -> None:
 
     if not success:
         console.print(
-            f"[red]Job ID [bold]{job_id}[/] not found. Run a search first or pull the latest repo.[/]"
+            f"[red]Job ID [bold]{job_id}[/] not found. Run a search first.[/]"
         )
         return
 
@@ -142,6 +142,7 @@ def cmd_ci() -> None:
 
 def _export_matches_json(rows: list[dict]) -> None:
     """Write results/matches.json so generate works locally without a local search."""
+    from datetime import datetime, timezone
     from src.storage import get_job
 
     results_dir = Path(__file__).parent / "results"
@@ -232,6 +233,7 @@ def _display_ranked(rows: list[dict]) -> None:
 
 
 def _print_executive_table(rows: list[dict]) -> None:
+    """Compact ranked summary table."""
     table = Table(
         title="[bold]Ranked Job Matches",
         box=box.ROUNDED,
@@ -252,6 +254,7 @@ def _print_executive_table(rows: list[dict]) -> None:
     _score_color = lambda s: "green" if s >= 80 else "yellow" if s >= 65 else "red"
 
     from src.validator import _parse_date
+    from datetime import datetime, timezone
 
     for i, r in enumerate(rows, 1):
         rank = r.get("priority_rank") or 3
@@ -296,6 +299,7 @@ def _print_job_card(r: dict, position: int) -> None:
     exec_summary = r.get("executive_summary") or ""
 
     body = Text()
+
     body.append(f"  {go_no_go}  ", style="")
     body.append(f"Score: ", style="dim")
     body.append(f"{score}/100\n\n", style=score_color + " bold")
@@ -337,6 +341,7 @@ def _print_job_card(r: dict, position: int) -> None:
 
 
 def _wrap(text: str, width: int) -> list[str]:
+    """Simple word-wrap."""
     words = text.split()
     lines, current = [], []
     length = 0
@@ -373,7 +378,7 @@ def _show_docs(docs) -> None:
     console.print()
 
 
-# ── Entry point ───────────────────────────────────────────────────────────────────────────────
+# ── Entry point ────────────────────────────────────────────────────────────────────────────────
 
 def main() -> None:
     args = sys.argv[1:]

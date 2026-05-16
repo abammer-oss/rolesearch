@@ -149,7 +149,6 @@ def fetch_adzuna(prefs: JobPreferences) -> list[JobPosting]:
     if not app_id or not app_key:
         return []
 
-    # Adzuna validates the Referer header against the domain registered with the app
     referrer = os.getenv("ADZUNA_REFERRER", "https://abammer.com")
     adzuna_session = requests.Session()
     adzuna_session.headers.update({
@@ -211,9 +210,8 @@ def fetch_adzuna(prefs: JobPreferences) -> list[JobPosting]:
     return deduped[: prefs.max_jobs_per_source]
 
 
-# ── The Muse (free, no auth — strong nonprofit/philanthropy coverage) ──────────────────
+# ── The Muse (free, no auth — confirmed working from GitHub Actions) ────────────────
 
-# Categories on The Muse that match Anthony's profile
 _MUSE_CATEGORIES = [
     "Fundraising & Development",
     "Social Services",
@@ -231,7 +229,7 @@ def fetch_themuse(prefs: JobPreferences) -> list[JobPosting]:
     seen: set[str] = set()
 
     for category in _MUSE_CATEGORIES:
-        for level in _MUSE_LEVELS[:2]:  # Senior + Management to keep request count low
+        for level in _MUSE_LEVELS[:2]:
             page = 0
             while len(jobs) < prefs.max_jobs_per_source:
                 data = _get(
@@ -255,10 +253,8 @@ def fetch_themuse(prefs: JobPreferences) -> list[JobPosting]:
                         "remote" in loc.get("name", "").lower() for loc in locations
                     )
 
-                    # The Muse returns HTML in contents — strip tags for description
                     raw_contents = j.get("contents", "") or ""
                     description = _strip_html(raw_contents) or j.get("name", "")
-
                     landing = j.get("refs", {}).get("landing_page", "")
 
                     jobs.append(JobPosting(
@@ -334,7 +330,6 @@ def _rss_to_posting(item: dict, source: str, default_location: str = "Remote") -
     jid = _make_id(source, guid)
 
     raw_title = item["title"]
-    # Common RSS title format: "Job Title - Org Name" or "Job Title | Org Name"
     company = ""
     for sep in (" - ", " | ", " — "):
         if sep in raw_title:
@@ -358,14 +353,9 @@ def _rss_to_posting(item: dict, source: str, default_location: str = "Remote") -
     )
 
 
-# ── Philanthropy News Digest Jobs (premier philanthropy exec job board) ────────────────
+# ── Philanthropy News Digest (RSS — may be Cloudflare-blocked from cloud IPs) ─────────
 
 def fetch_pnd(prefs: JobPreferences) -> list[JobPosting]:
-    """
-    Philanthropy News Digest (Candid/Foundation Center) job listings RSS.
-    Posts CDO, VP Philanthropy, Executive Director, and Director of Development
-    roles from major foundations, nonprofits, and social-impact orgs.
-    """
     items = _fetch_rss("https://philanthropynewsdigest.org/jobs/rss", "pnd")
     jobs: list[JobPosting] = []
     seen: set[str] = set()
@@ -380,15 +370,11 @@ def fetch_pnd(prefs: JobPreferences) -> list[JobPosting]:
     return jobs
 
 
-# ── Chronicle of Philanthropy Jobs (top nonprofit sector publication) ────────────────
+# ── Chronicle of Philanthropy Jobs (RSS — may be Cloudflare-blocked from cloud IPs) ────
 
 def fetch_chronicle(prefs: JobPreferences) -> list[JobPosting]:
-    """
-    Chronicle of Philanthropy job board RSS — executive nonprofit/philanthropy roles.
-    """
     items = _fetch_rss("https://jobs.philanthropy.com/rss/jobs/", "chronicle")
     if not items:
-        # Alternate URL pattern
         items = _fetch_rss("https://jobs.philanthropy.com/feed/rss2", "chronicle")
     jobs: list[JobPosting] = []
     seen: set[str] = set()
@@ -403,7 +389,7 @@ def fetch_chronicle(prefs: JobPreferences) -> list[JobPosting]:
     return jobs
 
 
-# ── Indeed RSS (broad coverage — may be rate-limited from cloud IPs) ─────────────────
+# ── Indeed RSS (may be Cloudflare-blocked from cloud IPs) ──────────────────────────
 
 _INDEED_SEARCHES = [
     ("chief development officer nonprofit", "remote"),
@@ -415,10 +401,8 @@ _INDEED_SEARCHES = [
 
 
 def fetch_indeed_rss(prefs: JobPreferences) -> list[JobPosting]:
-    """Fetch from Indeed via public RSS — nonprofit executive searches."""
     jobs: list[JobPosting] = []
     seen: set[str] = set()
-
     for query, location in _INDEED_SEARCHES:
         params = {"q": query, "l": location, "sort": "date", "fromage": "21"}
         items = _fetch_rss(
@@ -431,12 +415,11 @@ def fetch_indeed_rss(prefs: JobPreferences) -> list[JobPosting]:
                 seen.add(posting.id)
                 jobs.append(posting)
         time.sleep(0.5)
-
     logger.info("indeed: fetched %d jobs", len(jobs))
     return jobs[: prefs.max_jobs_per_source]
 
 
-# ── Idealist.org (nonprofit / social-impact executive roles) ──────────────────────────
+# ── Idealist.org (API endpoint unconfirmed) ──────────────────────────────────────────
 
 _IDEALIST_TERMS = [
     "chief development officer",
@@ -445,10 +428,7 @@ _IDEALIST_TERMS = [
     "director of development",
     "managing director",
     "executive director",
-    "director strategic partnerships",
-    "managing partner nonprofit",
 ]
-
 
 _IDEALIST_ENDPOINTS = [
     "https://www.idealist.org/api/listing/search",
@@ -458,7 +438,6 @@ _IDEALIST_ENDPOINTS = [
 
 
 def fetch_idealist(prefs: JobPreferences) -> list[JobPosting]:
-    """Fetch from Idealist.org — the premier nonprofit/social-impact job board."""
     jobs: list[JobPosting] = []
     seen: set[str] = set()
 
@@ -474,8 +453,6 @@ def fetch_idealist(prefs: JobPreferences) -> list[JobPosting]:
             logger.warning("idealist: all endpoints failed for term '%s'", term)
             continue
 
-        logger.debug("idealist raw keys for '%s': %s", term, list(data.keys()) if isinstance(data, dict) else type(data).__name__)
-
         hits = data.get("hits") or data.get("results") or data.get("jobs") or []
         for j in hits:
             raw_id = str(j.get("id") or j.get("slug") or j.get("url") or "")
@@ -487,36 +464,25 @@ def fetch_idealist(prefs: JobPreferences) -> list[JobPosting]:
             seen.add(jid)
 
             org = j.get("organization") or j.get("org") or {}
-            if isinstance(org, str):
-                org_name = org
-            else:
-                org_name = org.get("name") or org.get("title") or ""
+            org_name = org.get("name") or org.get("title") or "" if isinstance(org, dict) else org
 
             locations = j.get("locations") or j.get("location") or []
             if isinstance(locations, str):
                 location = locations
             elif isinstance(locations, list) and locations:
                 loc0 = locations[0]
-                if isinstance(loc0, dict):
-                    location = loc0.get("city") or loc0.get("name") or "Remote"
-                else:
-                    location = str(loc0)
+                location = loc0.get("city") or loc0.get("name") or "Remote" if isinstance(loc0, dict) else str(loc0)
             else:
                 location = "Remote"
 
-            sal_min = j.get("salaryMin") or j.get("salary_min") or j.get("compensationMin")
-            sal_max = j.get("salaryMax") or j.get("salary_max") or j.get("compensationMax")
+            sal_min = j.get("salaryMin") or j.get("salary_min")
+            sal_max = j.get("salaryMax") or j.get("salary_max")
             salary = None
             if sal_min and sal_max:
                 try:
                     salary = f"${float(sal_min):,.0f}–${float(sal_max):,.0f}/yr"
                 except (TypeError, ValueError):
-                    salary = f"{sal_min}–{sal_max}"
-            elif sal_min:
-                try:
-                    salary = f"${float(sal_min):,.0f}+/yr"
-                except (TypeError, ValueError):
-                    salary = str(sal_min)
+                    pass
 
             raw_url = j.get("url") or j.get("applicationUrl") or ""
             if not raw_url and raw_id:
@@ -534,7 +500,7 @@ def fetch_idealist(prefs: JobPreferences) -> list[JobPosting]:
                 url=raw_url,
                 description=desc,
                 salary=salary,
-                job_type=j.get("jobType") or j.get("job_type") or "full-time",
+                job_type=j.get("jobType") or "full-time",
                 source="idealist",
                 posted_at=j.get("publishedAt") or j.get("published_at") or j.get("updatedAt"),
                 tags=j.get("skills") or j.get("tags") or [],
@@ -549,14 +515,9 @@ def fetch_idealist(prefs: JobPreferences) -> list[JobPosting]:
     return jobs[: prefs.max_jobs_per_source]
 
 
-# ── USAJOBS (federal / government roles — optional) ───────────────────────────────────
+# ── USAJOBS (optional — requires USAJOBS_API_KEY + USAJOBS_USER_AGENT) ──────────────
 
 def fetch_usajobs(prefs: JobPreferences) -> list[JobPosting]:
-    """
-    Fetch from USAJOBS.gov — relevant for Anthony's government/federal-funding work.
-    Requires USAJOBS_API_KEY and USAJOBS_USER_AGENT (your email) env vars.
-    Register free at https://developer.usajobs.gov/
-    """
     api_key = os.getenv("USAJOBS_API_KEY")
     user_agent = os.getenv("USAJOBS_USER_AGENT")
     if not api_key or not user_agent:
@@ -575,33 +536,20 @@ def fetch_usajobs(prefs: JobPreferences) -> list[JobPosting]:
         "nonprofit director",
         "community development director",
         "grants management director",
-        "strategic partnerships director",
         "chief development officer",
     ]
 
     for kw in keywords[:3]:
-        params = {
-            "Keyword": kw,
-            "ResultsPerPage": 25,
-            "SalaryBucket": "130",
-            "WhoMayApply": "public",
-        }
+        params = {"Keyword": kw, "ResultsPerPage": 25, "WhoMayApply": "public"}
         try:
-            r = session.get(
-                "https://data.usajobs.gov/api/search",
-                params=params, timeout=15,
-            )
+            r = session.get("https://data.usajobs.gov/api/search", params=params, timeout=15)
             r.raise_for_status()
             data = r.json()
         except Exception as exc:
             logger.warning("USAJOBS request failed: %s", exc)
             continue
 
-        items = (
-            data.get("SearchResult", {})
-                .get("SearchResultItems", [])
-        )
-        for item in items:
+        for item in data.get("SearchResult", {}).get("SearchResultItems", []):
             pos = item.get("MatchedObjectDescriptor", {})
             raw_id = pos.get("PositionID", "")
             jid = _make_id("usajobs", raw_id)
@@ -618,7 +566,7 @@ def fetch_usajobs(prefs: JobPreferences) -> list[JobPosting]:
                 try:
                     salary = f"${float(sal_min):,.0f}–${float(sal_max):,.0f} {sal_unit}"
                 except (TypeError, ValueError):
-                    salary = f"{sal_min}–{sal_max} {sal_unit}"
+                    pass
 
             locations = pos.get("PositionLocation", [{}])
             loc_name = locations[0].get("LocationName", "USA") if locations else "USA"
@@ -631,18 +579,117 @@ def fetch_usajobs(prefs: JobPreferences) -> list[JobPosting]:
                 url=pos.get("PositionURI", ""),
                 description=pos.get("QualificationSummary", ""),
                 salary=salary,
-                job_type=pos.get("PositionScheduleType", [{}])[0].get("Name") if pos.get("PositionScheduleType") else "Full-Time",
+                job_type="Full-Time",
                 source="usajobs",
                 posted_at=pos.get("PublicationStartDate"),
                 tags=[j.get("Name", "") for j in pos.get("JobCategory", [])],
-                remote=any(
-                    "remote" in loc.get("LocationName", "").lower()
-                    for loc in locations
-                ),
+                remote=any("remote" in loc.get("LocationName", "").lower() for loc in locations),
             ))
         time.sleep(0.3)
 
     logger.info("usajobs: fetched %d jobs", len(jobs))
+    return jobs[: prefs.max_jobs_per_source]
+
+
+# ── JSearch on RapidAPI (aggregates Google Jobs / Indeed / LinkedIn) ────────────────
+
+_JSEARCH_QUERIES = [
+    "Chief Development Officer nonprofit",
+    "Vice President Philanthropy",
+    "Executive Director nonprofit social impact",
+    "Director of Development nonprofit",
+    "Chief Impact Officer",
+    "Managing Director nonprofit",
+    "VP Strategic Partnerships nonprofit",
+    "Director Federal Grants nonprofit",
+]
+
+
+def fetch_jsearch(prefs: JobPreferences) -> list[JobPosting]:
+    """
+    JSearch on RapidAPI — aggregates Google Jobs, Indeed, LinkedIn, Glassdoor.
+    Designed for cloud/server access; no IP blocking. Free tier: 200 req/day.
+    Register at rapidapi.com and subscribe to JSearch (free), then add
+    RAPIDAPI_KEY as a GitHub Actions secret.
+    """
+    api_key = os.getenv("RAPIDAPI_KEY")
+    if not api_key:
+        return []
+
+    headers = {
+        "X-RapidAPI-Key": api_key,
+        "X-RapidAPI-Host": "jsearch.p.rapidapi.com",
+    }
+
+    jobs: list[JobPosting] = []
+    seen: set[str] = set()
+
+    for query in _JSEARCH_QUERIES[:5]:  # 5 queries × ~10 results = ~50 jobs
+        params = {
+            "query": query,
+            "page": "1",
+            "num_pages": "1",
+            "date_posted": "month",
+        }
+        try:
+            r = requests.get(
+                "https://jsearch.p.rapidapi.com/search",
+                headers=headers,
+                params=params,
+                timeout=15,
+            )
+            r.raise_for_status()
+            data = r.json()
+        except Exception as exc:
+            logger.warning("JSearch failed for '%s': %s", query, exc)
+            continue
+
+        for j in data.get("data", []):
+            raw_id = j.get("job_id", "")
+            if not raw_id:
+                continue
+            jid = _make_id("jsearch", raw_id)
+            if jid in seen:
+                continue
+            seen.add(jid)
+
+            city  = j.get("job_city", "") or ""
+            state = j.get("job_state", "") or ""
+            location = ", ".join(p for p in [city, state] if p) or "USA"
+
+            sal_min    = j.get("job_min_salary")
+            sal_max    = j.get("job_max_salary")
+            sal_period = j.get("job_salary_period") or "YEAR"
+            salary = None
+            if sal_min and sal_max:
+                try:
+                    suffix = "/yr" if "YEAR" in sal_period.upper() else f"/{sal_period.lower()}"
+                    salary = f"${float(sal_min):,.0f}–${float(sal_max):,.0f}{suffix}"
+                except (TypeError, ValueError):
+                    pass
+            elif sal_min:
+                try:
+                    salary = f"${float(sal_min):,.0f}+/yr"
+                except (TypeError, ValueError):
+                    pass
+
+            jobs.append(JobPosting(
+                id=jid,
+                title=j.get("job_title", ""),
+                company=j.get("employer_name", ""),
+                location=location,
+                url=j.get("job_apply_link") or j.get("job_google_link") or "",
+                description=j.get("job_description", ""),
+                salary=salary,
+                job_type=(j.get("job_employment_type") or "FULLTIME").replace("_", " ").title(),
+                source="jsearch",
+                posted_at=j.get("job_posted_at_datetime_utc"),
+                tags=j.get("job_required_skills") or [],
+                remote=bool(j.get("job_is_remote")),
+            ))
+        time.sleep(0.3)
+
+    print(f"      jsearch: {len(jobs)} jobs fetched")
     return jobs[: prefs.max_jobs_per_source]
 
 
@@ -651,22 +698,25 @@ def fetch_usajobs(prefs: JobPreferences) -> list[JobPosting]:
 def fetch_all_jobs(prefs: JobPreferences) -> list[JobPosting]:
     """Fetch from all configured sources and deduplicate by ID."""
     all_jobs: list[JobPosting] = []
-    for fetcher in (
-        fetch_pnd,        # Philanthropy News Digest — sector-specific CDO/philanthropy RSS
-        fetch_chronicle,  # Chronicle of Philanthropy jobs — sector-specific RSS
-        fetch_indeed_rss, # broad nonprofit/exec coverage via Indeed RSS
-        fetch_idealist,   # Idealist.org nonprofit board (API endpoint in discovery)
-        fetch_usajobs,    # federal/government roles (optional, requires API key)
-        fetch_themuse,    # Fundraising & Development categories
-        fetch_adzuna,     # broad coverage (requires API key)
-        fetch_remotive,   # remote-first roles
+    fetchers = (
+        fetch_jsearch,    # Google Jobs aggregator via RapidAPI — cloud-safe, requires RAPIDAPI_KEY
+        fetch_themuse,    # Fundraising & Development categories — confirmed working
+        fetch_remotive,   # remote-first roles — confirmed working
+        fetch_pnd,        # Philanthropy News Digest RSS (may be Cloudflare-blocked)
+        fetch_chronicle,  # Chronicle of Philanthropy RSS (may be Cloudflare-blocked)
+        fetch_indeed_rss, # Indeed RSS (may be Cloudflare-blocked)
+        fetch_idealist,   # Idealist.org (API endpoint unconfirmed)
+        fetch_usajobs,    # federal/government roles — requires USAJOBS_API_KEY
+        fetch_adzuna,     # broad coverage — requires ADZUNA_APP_ID/KEY
         fetch_jobicy,     # remote jobs
         fetch_arbeitnow,  # broad job board
-    ):
+    )
+    for fetcher in fetchers:
         try:
-            all_jobs.extend(fetcher(prefs))
+            batch = fetcher(prefs)
+            all_jobs.extend(batch)
         except Exception as exc:
-            logger.error("Fetcher %s crashed: %s", fetcher.__name__, exc)
+            print(f"      {fetcher.__name__}: ERROR — {exc}")
 
     seen: set[str] = set()
     deduped: list[JobPosting] = []
@@ -674,5 +724,5 @@ def fetch_all_jobs(prefs: JobPreferences) -> list[JobPosting]:
         if j.id not in seen:
             seen.add(j.id)
             deduped.append(j)
-    logger.info("total unique jobs fetched: %d", len(deduped))
+    print(f"      Total unique jobs fetched: {len(deduped)}")
     return deduped
