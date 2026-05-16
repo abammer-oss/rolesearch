@@ -296,12 +296,216 @@ def _strip_html(html: str) -> str:
     return re.sub(r"\s+", " ", text).strip()
 
 
+# ── Idealist.org (nonprofit / social-impact executive roles) ──────────────────
+
+_IDEALIST_TERMS = [
+    "chief development officer",
+    "chief impact officer",
+    "vice president philanthropy",
+    "director of development",
+    "managing director",
+    "executive director",
+    "director strategic partnerships",
+    "managing partner nonprofit",
+]
+
+
+def fetch_idealist(prefs: JobPreferences) -> list[JobPosting]:
+    """Fetch from Idealist.org — the premier nonprofit/social-impact job board."""
+    jobs: list[JobPosting] = []
+    seen: set[str] = set()
+
+    for term in _IDEALIST_TERMS[:5]:
+        params = {"type": "JOB", "q": term, "page": 0, "pageSize": 20}
+        data = _get("https://www.idealist.org/api/listing/search", params)
+        if not data:
+            continue
+
+        hits = data.get("hits") or data.get("results") or data.get("jobs") or []
+        for j in hits:
+            raw_id = str(j.get("id") or j.get("slug") or j.get("url") or "")
+            if not raw_id:
+                continue
+            jid = _make_id("idealist", raw_id)
+            if jid in seen:
+                continue
+            seen.add(jid)
+
+            org = j.get("organization") or j.get("org") or {}
+            if isinstance(org, str):
+                org_name = org
+            else:
+                org_name = org.get("name") or org.get("title") or ""
+
+            locations = j.get("locations") or j.get("location") or []
+            if isinstance(locations, str):
+                location = locations
+            elif isinstance(locations, list) and locations:
+                loc0 = locations[0]
+                if isinstance(loc0, dict):
+                    location = loc0.get("city") or loc0.get("name") or "Remote"
+                else:
+                    location = str(loc0)
+            else:
+                location = "Remote"
+
+            sal_min = j.get("salaryMin") or j.get("salary_min") or j.get("compensationMin")
+            sal_max = j.get("salaryMax") or j.get("salary_max") or j.get("compensationMax")
+            salary = None
+            if sal_min and sal_max:
+                try:
+                    salary = f"${float(sal_min):,.0f}–${float(sal_max):,.0f}/yr"
+                except (TypeError, ValueError):
+                    salary = f"{sal_min}–{sal_max}"
+            elif sal_min:
+                try:
+                    salary = f"${float(sal_min):,.0f}+/yr"
+                except (TypeError, ValueError):
+                    salary = str(sal_min)
+
+            raw_url = j.get("url") or j.get("applicationUrl") or ""
+            if not raw_url and raw_id:
+                raw_url = f"https://www.idealist.org/en/job/{raw_id}"
+
+            desc = j.get("description") or j.get("body") or j.get("summary") or ""
+            if "<" in desc:
+                desc = _strip_html(desc)
+
+            jobs.append(JobPosting(
+                id=jid,
+                title=j.get("name") or j.get("title") or "",
+                company=org_name,
+                location=location,
+                url=raw_url,
+                description=desc,
+                salary=salary,
+                job_type=j.get("jobType") or j.get("job_type") or "full-time",
+                source="idealist",
+                posted_at=j.get("publishedAt") or j.get("published_at") or j.get("updatedAt"),
+                tags=j.get("skills") or j.get("tags") or [],
+                remote=any(
+                    "remote" in str(loc).lower()
+                    for loc in (locations if isinstance(locations, list) else [locations])
+                ),
+            ))
+        time.sleep(0.5)
+
+    logger.info("idealist: fetched %d jobs", len(jobs))
+    return jobs[: prefs.max_jobs_per_source]
+
+
+# ── USAJOBS (federal / government roles — optional) ───────────────────────────
+
+def fetch_usajobs(prefs: JobPreferences) -> list[JobPosting]:
+    """
+    Fetch from USAJOBS.gov — relevant for Anthony's government/federal-funding work.
+    Requires USAJOBS_API_KEY and USAJOBS_USER_AGENT (your email) env vars.
+    Register free at https://developer.usajobs.gov/
+    """
+    api_key = os.getenv("USAJOBS_API_KEY")
+    user_agent = os.getenv("USAJOBS_USER_AGENT")
+    if not api_key or not user_agent:
+        return []
+
+    session = requests.Session()
+    session.headers.update({
+        "Authorization-Key": api_key,
+        "User-Agent": user_agent,
+        "Host": "data.usajobs.gov",
+    })
+
+    jobs: list[JobPosting] = []
+    seen: set[str] = set()
+    keywords = [
+        "nonprofit director",
+        "community development director",
+        "grants management director",
+        "strategic partnerships director",
+        "chief development officer",
+    ]
+
+    for kw in keywords[:3]:
+        params = {
+            "Keyword": kw,
+            "ResultsPerPage": 25,
+            "SalaryBucket": "130",  # $130K+ (nearest Adzuna-style bucket)
+            "WhoMayApply": "public",
+        }
+        try:
+            r = session.get(
+                "https://data.usajobs.gov/api/search",
+                params=params, timeout=15,
+            )
+            r.raise_for_status()
+            data = r.json()
+        except Exception as exc:
+            logger.warning("USAJOBS request failed: %s", exc)
+            continue
+
+        items = (
+            data.get("SearchResult", {})
+                .get("SearchResultItems", [])
+        )
+        for item in items:
+            pos = item.get("MatchedObjectDescriptor", {})
+            raw_id = pos.get("PositionID", "")
+            jid = _make_id("usajobs", raw_id)
+            if jid in seen:
+                continue
+            seen.add(jid)
+
+            # Salary
+            pay = pos.get("PositionRemuneration", [{}])[0] if pos.get("PositionRemuneration") else {}
+            sal_min = pay.get("MinimumRange")
+            sal_max = pay.get("MaximumRange")
+            sal_unit = pay.get("RateIntervalCode", "Per Year")
+            salary = None
+            if sal_min and sal_max:
+                try:
+                    salary = f"${float(sal_min):,.0f}–${float(sal_max):,.0f} {sal_unit}"
+                except (TypeError, ValueError):
+                    salary = f"{sal_min}–{sal_max} {sal_unit}"
+
+            locations = pos.get("PositionLocation", [{}])
+            loc_name = locations[0].get("LocationName", "USA") if locations else "USA"
+
+            jobs.append(JobPosting(
+                id=jid,
+                title=pos.get("PositionTitle", ""),
+                company=pos.get("OrganizationName", "US Government"),
+                location=loc_name,
+                url=pos.get("PositionURI", ""),
+                description=pos.get("QualificationSummary", ""),
+                salary=salary,
+                job_type=pos.get("PositionScheduleType", [{}])[0].get("Name") if pos.get("PositionScheduleType") else "Full-Time",
+                source="usajobs",
+                posted_at=pos.get("PublicationStartDate"),
+                tags=[j.get("Name", "") for j in pos.get("JobCategory", [])],
+                remote=any(
+                    "remote" in loc.get("LocationName", "").lower()
+                    for loc in locations
+                ),
+            ))
+        time.sleep(0.3)
+
+    logger.info("usajobs: fetched %d jobs", len(jobs))
+    return jobs[: prefs.max_jobs_per_source]
+
+
 # ── Public entry point ────────────────────────────────────────────────────────
 
 def fetch_all_jobs(prefs: JobPreferences) -> list[JobPosting]:
     """Fetch from all configured sources and deduplicate by ID."""
     all_jobs: list[JobPosting] = []
-    for fetcher in (fetch_arbeitnow, fetch_remotive, fetch_jobicy, fetch_themuse, fetch_adzuna):
+    for fetcher in (
+        fetch_idealist,   # nonprofit/social-impact — highest priority for Anthony
+        fetch_usajobs,    # federal/government roles (optional, requires API key)
+        fetch_themuse,    # Fundraising & Development categories
+        fetch_adzuna,     # broad coverage (requires API key)
+        fetch_remotive,   # remote-first roles
+        fetch_jobicy,     # remote jobs
+        fetch_arbeitnow,  # broad job board
+    ):
         try:
             all_jobs.extend(fetcher(prefs))
         except Exception as exc:
