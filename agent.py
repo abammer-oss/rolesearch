@@ -18,10 +18,13 @@ from src.storage import (
     get_job,
     get_unmatched_jobs,
     init_db,
+    jobs_needing_liveness_recheck,
+    mark_job_liveness,
     save_documents,
     save_jobs,
     save_match,
 )
+from src.validator import check_url_live, filter_valid_jobs
 
 logger = logging.getLogger(__name__)
 
@@ -57,14 +60,46 @@ class RoleSearchAgent:
         self.client = _make_client()
 
     def refresh(self, console=None) -> list[dict]:
-        """Fetch fresh jobs, score them, generate docs for top matches."""
+        """Fetch fresh jobs, validate, score, and generate docs for top matches."""
         _log = console.log if console else logger.info
 
         _log("[bold cyan]Fetching jobs from all sources…[/]" if console else "Fetching jobs…")
-        jobs = fetch_all_jobs(self.prefs)
+        raw_jobs = fetch_all_jobs(self.prefs)
+
+        _log(
+            f"[cyan]Validating {len(raw_jobs)} jobs (age + liveness check)…[/]"
+            if console else f"Validating {len(raw_jobs)} jobs…"
+        )
+        jobs, stats = filter_valid_jobs(raw_jobs, check_liveness=True)
+        dropped_msg = (
+            f"  Dropped: {stats['too_old']} too old (>21 days), "
+            f"{stats['inactive']} inactive URLs"
+        )
+        _log(f"[dim]{dropped_msg}[/]" if console else dropped_msg)
+
         new_count = save_jobs(jobs)
-        _log(f"Found {len(jobs)} jobs total, {new_count} new." if not console else
-             f"[green]Found {len(jobs)} jobs total, {new_count} new.[/]")
+        _log(
+            f"[green]Found {len(jobs)} valid jobs, {new_count} new.[/]"
+            if console else f"Found {len(jobs)} valid jobs, {new_count} new."
+        )
+
+        # Re-check liveness of previously-stored jobs that are stale
+        stale = jobs_needing_liveness_recheck(stale_hours=12)
+        if stale:
+            _log(
+                f"[dim]Re-checking liveness of {len(stale)} stored jobs…[/]"
+                if console else f"Re-checking {len(stale)} stored jobs…"
+            )
+            from concurrent.futures import ThreadPoolExecutor, as_completed
+            with ThreadPoolExecutor(max_workers=12) as pool:
+                futures = {pool.submit(check_url_live, j.url): j for j in stale}
+                for fut in as_completed(futures):
+                    job = futures[fut]
+                    try:
+                        live = fut.result()
+                    except Exception:
+                        live = True
+                    mark_job_liveness(job.id, live)
 
         unmatched = get_unmatched_jobs()
         if not unmatched:

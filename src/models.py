@@ -85,6 +85,8 @@ class MatchResult(BaseModel):
     key_matches: list[str]
     gaps: list[str]
     recommendation: str  # "apply" | "maybe" | "skip"
+    executive_summary: str = ""  # 2-3 sentence role overview tailored to candidate
+    priority_rank: int = 3       # 1=apply immediately, 2=apply soon, 3=consider
 
 
 class GeneratedDocuments(BaseModel):

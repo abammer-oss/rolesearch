@@ -26,14 +26,35 @@ _SCORE_TOOL = {
                 "items": {
                     "type": "object",
                     "properties": {
-                        "job_id":         {"type": "string"},
-                        "score":          {"type": "integer", "minimum": 0, "maximum": 100},
-                        "reasoning":      {"type": "string"},
-                        "key_matches":    {"type": "array", "items": {"type": "string"}},
-                        "gaps":           {"type": "array", "items": {"type": "string"}},
-                        "recommendation": {"type": "string", "enum": ["apply", "maybe", "skip"]},
+                        "job_id":            {"type": "string"},
+                        "score":             {"type": "integer", "minimum": 0, "maximum": 100},
+                        "reasoning":         {"type": "string"},
+                        "key_matches":       {"type": "array", "items": {"type": "string"}},
+                        "gaps":              {"type": "array", "items": {"type": "string"}},
+                        "recommendation":    {"type": "string", "enum": ["apply", "maybe", "skip"]},
+                        "executive_summary": {
+                            "type": "string",
+                            "description": (
+                                "2-3 sentence executive summary of the role written FOR the candidate: "
+                                "what the company does, what this role owns, and why it's (or isn't) "
+                                "a strong match for their specific background."
+                            ),
+                        },
+                        "priority_rank": {
+                            "type": "integer",
+                            "enum": [1, 2, 3],
+                            "description": (
+                                "1 = Apply Immediately (score ≥80, strong skills match, no deal-breakers). "
+                                "2 = Apply Soon (score 65–79, good fit with minor gaps). "
+                                "3 = Consider (score 50–64, worth reviewing but meaningful gaps). "
+                                "Skipped jobs should use recommendation=skip, not priority_rank."
+                            ),
+                        },
                     },
-                    "required": ["job_id", "score", "reasoning", "key_matches", "gaps", "recommendation"],
+                    "required": [
+                        "job_id", "score", "reasoning", "key_matches", "gaps",
+                        "recommendation", "executive_summary", "priority_rank",
+                    ],
                 },
             }
         },
@@ -84,7 +105,7 @@ def _build_prompt(resume: Resume, prefs: JobPreferences, batch: list[JobPosting]
         f"Description (first 600 chars):\n{j.description[:600]}"
         for i, j in enumerate(batch)
     )
-    return f"""You are an expert career advisor. Evaluate each job posting against the candidate's resume and preferences.
+    return f"""You are an expert career advisor evaluating job postings for a specific candidate.
 
 ## Candidate Resume
 {_resume_summary(resume)}
@@ -95,14 +116,22 @@ def _build_prompt(resume: Resume, prefs: JobPreferences, batch: list[JobPosting]
 ## Job Postings to Evaluate
 {jobs_text}
 
-For each job, call the score_jobs tool with:
-- score 0–100 (how well the job fits the candidate's skills AND preferences)
-- key_matches: specific skills/experience that align
-- gaps: skills/requirements the candidate may lack
-- recommendation: "apply" (≥75), "maybe" (50–74), "skip" (<50 or deal-breaker present)
+For EACH job, call the score_jobs tool. Fill every required field:
 
-Be strict: a job with a deal-breaker keyword automatically gets recommendation "skip" and score ≤20.
-A job that doesn't match preferred titles or requires skills the candidate lacks should score lower.
+- **score** (0–100): How strongly does this role fit the candidate's skills AND preferences?
+- **key_matches**: Specific skills, tools, or experiences from the resume that directly match.
+- **gaps**: Skills or requirements in the job the candidate visibly lacks (be honest).
+- **recommendation**: "apply" (score ≥75), "maybe" (50–74), "skip" (<50 or deal-breaker found).
+- **executive_summary**: 2–3 sentences written FOR the candidate. Cover: what the company does,
+  what this specific role owns day-to-day, and a candid assessment of fit vs. their background.
+  Be specific — mention their actual experience and how it maps to this role.
+- **priority_rank**: 1 = Apply Immediately, 2 = Apply Soon, 3 = Consider.
+
+Rules:
+- Any job containing a deal-breaker keyword → recommendation="skip", score ≤20, priority_rank=3.
+- Any excluded company → recommendation="skip".
+- Do not inflate scores — gaps matter and salary mismatches count against the score.
+- priority_rank must be consistent with score: rank 1 requires score ≥80 and recommendation="apply".
 """
 
 
