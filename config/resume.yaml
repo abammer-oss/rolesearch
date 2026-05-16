@@ -1,0 +1,99 @@
+# ─────────────────────────────────────────────────────
+#  YOUR RESUME  —  fill this in with your real details
+# ─────────────────────────────────────────────────────
+
+personal:
+  name: Jane Smith
+  email: jane.smith@email.com
+  phone: "+1 (555) 123-4567"
+  location: San Francisco, CA (Open to Remote)
+  linkedin: https://linkedin.com/in/janesmith
+  github: https://github.com/janesmith
+  website: https://janesmith.dev
+
+summary: >
+  Full-stack software engineer with 6 years of experience building scalable
+  web applications and data pipelines. Passionate about developer tooling,
+  distributed systems, and turning ambiguous problems into clean, maintainable
+  solutions. Proven track record delivering high-impact features at Series B
+  and growth-stage startups.
+
+skills:
+  languages:
+    - Python
+    - TypeScript
+    - Go
+    - SQL
+  frameworks:
+    - FastAPI
+    - React
+    - Next.js
+    - GraphQL
+  infrastructure:
+    - AWS (EC2, S3, Lambda, RDS)
+    - Docker
+    - Kubernetes
+    - Terraform
+  databases:
+    - PostgreSQL
+    - Redis
+    - MongoDB
+  practices:
+    - CI/CD
+    - Test-driven development
+    - Agile / Scrum
+    - System design
+
+experience:
+  - title: Senior Software Engineer
+    company: Acme Corp
+    location: San Francisco, CA
+    start_date: "2022-03"
+    end_date: Present
+    highlights:
+      - Led migration of monolith to microservices, reducing p99 latency by 40%
+      - Built real-time data pipeline ingesting 50k events/sec using Kafka and Flink
+      - Mentored 3 junior engineers; established team code-review culture
+      - Owned end-to-end delivery of search feature used by 200k daily active users
+
+  - title: Software Engineer
+    company: Beta Startup
+    location: Remote
+    start_date: "2019-06"
+    end_date: "2022-02"
+    highlights:
+      - Designed and built REST + GraphQL APIs consumed by iOS, Android, and web clients
+      - Reduced infrastructure costs by 35% by right-sizing EC2 instances and adding caching
+      - Shipped A/B testing framework adopted by 4 product teams
+      - Improved test coverage from 42% to 85% across core services
+
+  - title: Junior Software Engineer
+    company: Dev Agency LLC
+    location: Austin, TX
+    start_date: "2018-01"
+    end_date: "2019-05"
+    highlights:
+      - Delivered client-facing web apps using React and Node.js
+      - Integrated third-party payment and auth providers (Stripe, Auth0)
+
+education:
+  - degree: B.S. Computer Science
+    institution: University of Texas at Austin
+    year: "2017"
+    gpa: "3.7"
+    honors: Magna Cum Laude
+
+projects:
+  - name: OpenMetrics Dashboard
+    description: Open-source observability dashboard with 800+ GitHub stars
+    technologies: [React, Python, ClickHouse]
+    url: https://github.com/janesmith/openmetrics
+
+  - name: AutoDeploy CLI
+    description: Zero-config deployment tool that wraps Terraform and Docker Compose
+    technologies: [Go, Docker, Terraform]
+    url: https://github.com/janesmith/autodeploy
+
+certifications:
+  - AWS Certified Solutions Architect – Associate (2023)
+  - Certified Kubernetes Administrator (CKA) (2022)

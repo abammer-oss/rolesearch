@@ -1,0 +1,58 @@
+# ──────────────────────────────────────────────────────
+#  JOB SEARCH PREFERENCES  —  tune these to your needs
+# ──────────────────────────────────────────────────────
+
+# Titles you're open to (used as search keywords)
+job_titles:
+  - Senior Software Engineer
+  - Staff Software Engineer
+  - Software Engineer
+  - Backend Engineer
+  - Full Stack Engineer
+  - Platform Engineer
+
+# Acceptable locations — include "Remote" for remote roles
+locations:
+  - Remote
+  - San Francisco, CA
+  - New York, NY
+  - Austin, TX
+
+# Employment types: full-time | part-time | contract | freelance
+job_types:
+  - full-time
+
+# Industries you prefer (leave empty to search all)
+industries:
+  - technology
+  - fintech
+  - developer tools
+  - infrastructure
+
+# Minimum annual salary in USD (0 = no filter)
+salary_min: 150000
+
+# Keywords that MUST appear (or be strongly implied) in a good match
+keywords:
+  - Python
+  - distributed systems
+
+# Anything here disqualifies a job automatically
+deal_breakers:
+  - blockchain
+  - crypto
+  - gambling
+  - adult content
+  - unpaid
+
+# Companies to skip entirely
+excluded_companies: []
+
+# Minimum AI match score (0–100) to include in results
+min_match_score: 65
+
+# How many top matches to auto-generate resume + cover letter for
+auto_generate_top_n: 5
+
+# Maximum jobs to fetch per source per run
+max_jobs_per_source: 50
