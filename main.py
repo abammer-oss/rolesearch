@@ -15,6 +15,7 @@ import json
 import logging
 import os
 import sys
+from datetime import datetime, timezone
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -30,7 +31,7 @@ logging.basicConfig(level=logging.WARNING, format="%(levelname)s: %(message)s")
 
 console = Console()
 
-# ── Tier config ───────────────────────────────────────────────────────────────
+# ── Tier config ────────────────────────────────────────────────────────────────────────────────
 
 _TIERS = {
     1: ("APPLY IMMEDIATELY", "bold green", "🚀"),
@@ -39,7 +40,7 @@ _TIERS = {
 }
 
 
-# ── Commands ──────────────────────────────────────────────────────────────────
+# ── Commands ────────────────────────────────────────────────────────────────────────────────
 
 def cmd_search() -> None:
     from agent import RoleSearchAgent
@@ -85,7 +86,7 @@ def cmd_generate(job_id: str) -> None:
 
     if not success:
         console.print(
-            f"[red]Job ID [bold]{job_id}[/] not found. Run a search first.[/]"
+            f"[red]Job ID [bold]{job_id}[/] not found. Run a search first or pull the latest repo.[/]"
         )
         return
 
@@ -95,10 +96,13 @@ def cmd_generate(job_id: str) -> None:
 
 
 def cmd_ci() -> None:
-    """Run in GitHub Actions: search, score, and open Issues for new top matches."""
+    """Run in GitHub Actions: search, score, open Issues, and export matches.json."""
     import os
     from agent import RoleSearchAgent
-    from src.storage import get_new_matches_for_notification, mark_issue_created, init_db
+    from src.storage import (
+        get_new_matches_for_notification, get_top_matches,
+        mark_issue_created, init_db,
+    )
     from src.notifier import notify_new_matches
 
     init_db()
@@ -120,6 +124,9 @@ def cmd_ci() -> None:
     new_matches = get_new_matches_for_notification(limit=20)
     print(f"      Found {len(new_matches)} new match(es) needing notification.")
 
+    # Always export full match catalogue so `generate` works locally without re-running search
+    _export_matches_json(get_top_matches(50))
+
     if not new_matches:
         print("\nNothing new to report. All done.")
         return
@@ -127,11 +134,35 @@ def cmd_ci() -> None:
     print(f"\n[3/3] Opening GitHub Issues in {repo}…")
     created = notify_new_matches(new_matches)
 
-    # Mark them so we don't re-notify on the next run
     for m in new_matches:
         mark_issue_created(m["job_id"])
 
     print(f"\nDone — {created} issue(s) opened.")
+
+
+def _export_matches_json(rows: list[dict]) -> None:
+    """Write results/matches.json so generate works locally without a local search."""
+    from src.storage import get_job
+
+    results_dir = Path(__file__).parent / "results"
+    results_dir.mkdir(exist_ok=True)
+
+    enriched = []
+    for r in rows:
+        job = get_job(r["job_id"])
+        entry = dict(r)
+        entry["description"] = job.description if job else ""
+        entry["key_matches"] = json.loads(r["key_matches"]) if isinstance(r["key_matches"], str) else r["key_matches"]
+        entry["gaps"]        = json.loads(r["gaps"])        if isinstance(r["gaps"], str)        else r["gaps"]
+        enriched.append(entry)
+
+    out = {
+        "exported_at": datetime.now(tz=timezone.utc).isoformat(),
+        "matches": enriched,
+    }
+    path = results_dir / "matches.json"
+    path.write_text(json.dumps(out, indent=2, default=str), encoding="utf-8")
+    print(f"      Exported {len(enriched)} match(es) → results/matches.json")
 
 
 def cmd_daemon() -> None:
@@ -166,7 +197,7 @@ def cmd_daemon() -> None:
         console.print("\n[yellow]Daemon stopped.[/]")
 
 
-# ── Display helpers ───────────────────────────────────────────────────────────
+# ── Display helpers ────────────────────────────────────────────────────────────────────────────
 
 def _display_ranked(rows: list[dict]) -> None:
     if not rows:
@@ -201,7 +232,6 @@ def _display_ranked(rows: list[dict]) -> None:
 
 
 def _print_executive_table(rows: list[dict]) -> None:
-    """Compact ranked summary table."""
     table = Table(
         title="[bold]Ranked Job Matches",
         box=box.ROUNDED,
@@ -222,14 +252,12 @@ def _print_executive_table(rows: list[dict]) -> None:
     _score_color = lambda s: "green" if s >= 80 else "yellow" if s >= 65 else "red"
 
     from src.validator import _parse_date
-    from datetime import datetime, timezone
 
     for i, r in enumerate(rows, 1):
         rank = r.get("priority_rank") or 3
         icon = _TIERS[rank][2]
         score = r["score"]
 
-        # Age label
         age_label = "—"
         if r.get("posted_at"):
             dt = _parse_date(r["posted_at"])
@@ -268,13 +296,10 @@ def _print_job_card(r: dict, position: int) -> None:
     exec_summary = r.get("executive_summary") or ""
 
     body = Text()
-
-    # Go/No-Go + score
     body.append(f"  {go_no_go}  ", style="")
     body.append(f"Score: ", style="dim")
     body.append(f"{score}/100\n\n", style=score_color + " bold")
 
-    # Metadata row
     meta_parts = [r["location"]]
     if r.get("salary"):
         meta_parts.append(r["salary"])
@@ -282,26 +307,22 @@ def _print_job_card(r: dict, position: int) -> None:
         meta_parts.append(r["job_type"])
     body.append("  " + "  |  ".join(meta_parts) + "\n\n", style="dim")
 
-    # Executive summary
     if exec_summary:
         body.append("  EXECUTIVE SUMMARY\n", style="bold underline")
         for line in _wrap(exec_summary, 90):
             body.append(f"  {line}\n", style="")
         body.append("\n")
 
-    # Key matches
     if key_matches:
         body.append("  KEY MATCHES  ", style="bold green")
         body.append("  ".join(f"[green]{m}[/]" for m in key_matches[:6]))
         body.append("\n")
 
-    # Gaps
     if gaps:
         body.append("  GAPS         ", style="bold yellow")
         body.append("  ".join(f"[yellow]{g}[/]" for g in gaps[:4]))
         body.append("\n")
 
-    # Links
     body.append(f"\n  Apply:  {r.get('url', '—')}\n", style="dim")
     body.append(f"  Docs:   python main.py generate {r['job_id']}\n", style="dim")
 
@@ -316,7 +337,6 @@ def _print_job_card(r: dict, position: int) -> None:
 
 
 def _wrap(text: str, width: int) -> list[str]:
-    """Simple word-wrap."""
     words = text.split()
     lines, current = [], []
     length = 0
@@ -353,7 +373,7 @@ def _show_docs(docs) -> None:
     console.print()
 
 
-# ── Entry point ───────────────────────────────────────────────────────────────
+# ── Entry point ───────────────────────────────────────────────────────────────────────────────
 
 def main() -> None:
     args = sys.argv[1:]

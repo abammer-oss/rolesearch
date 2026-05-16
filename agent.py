@@ -83,7 +83,6 @@ class RoleSearchAgent:
             if console else f"Found {len(jobs)} valid jobs, {new_count} new."
         )
 
-        # Re-check liveness of previously-stored jobs that are stale
         stale = jobs_needing_liveness_recheck(stale_hours=12)
         if stale:
             _log(
@@ -114,7 +113,6 @@ class RoleSearchAgent:
         for m in matches:
             save_match(m)
 
-        # Also save "skip" results so we don't re-score them
         matched_ids = {m.job_id for m in matches}
         from src.models import MatchResult
         for job in unmatched:
@@ -149,11 +147,52 @@ class RoleSearchAgent:
         return matches
 
     def generate_for_job(self, job_id: str) -> bool:
-        """Generate documents for a specific job by ID."""
+        """Generate documents for a specific job by ID.
+
+        Falls back to results/matches.json if the job isn't in the local DB,
+        so the command works after pulling the repo without running a local search.
+        """
         job = get_job(job_id)
-        if not job:
-            logger.error("Job %s not found in database.", job_id)
-            return False
+
+        if job is None:
+            job = _job_from_matches_json(job_id)
+            if job is None:
+                logger.error(
+                    "Job %s not found in local DB or results/matches.json.\n"
+                    "Run 'python main.py search' first, or pull the latest repo.",
+                    job_id,
+                )
+                return False
+
         docs = generate_documents(self.resume, job, self.client)
         save_documents(docs)
         return True
+
+
+def _job_from_matches_json(job_id: str) -> "JobPosting | None":
+    """Load a JobPosting from the committed results/matches.json file."""
+    import json as _json
+    matches_path = Path(__file__).parent / "results" / "matches.json"
+    if not matches_path.exists():
+        return None
+    try:
+        data = _json.loads(matches_path.read_text(encoding="utf-8"))
+        for m in data.get("matches", []):
+            if m.get("job_id") == job_id:
+                return JobPosting(
+                    id=m["job_id"],
+                    title=m["title"],
+                    company=m["company"],
+                    location=m["location"],
+                    url=m.get("url", ""),
+                    description=m.get("description", ""),
+                    salary=m.get("salary"),
+                    job_type=m.get("job_type"),
+                    source=m.get("source", ""),
+                    posted_at=m.get("posted_at"),
+                    tags=[],
+                    remote=bool(m.get("remote", False)),
+                )
+    except Exception as exc:
+        logger.warning("Could not read matches.json: %s", exc)
+    return None
