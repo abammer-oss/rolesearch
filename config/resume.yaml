@@ -1,99 +1,204 @@
 # ─────────────────────────────────────────────────────
-#  YOUR RESUME  —  fill this in with your real details
+#  ANTHONY BAMMER — Resume Configuration
 # ─────────────────────────────────────────────────────
 
 personal:
-  name: Jane Smith
-  email: jane.smith@email.com
-  phone: "+1 (555) 123-4567"
-  location: San Francisco, CA (Open to Remote)
-  linkedin: https://linkedin.com/in/janesmith
-  github: https://github.com/janesmith
-  website: https://janesmith.dev
+  name: Anthony Bammer
+  email: abammer@g1ve-technologies.us
+  phone: "(478) 714-7076"
+  location: Atlanta, GA (Open to Remote)
+  linkedin: https://linkedin.com/in/abammer
+  website: https://abammer.com/
 
 summary: >
-  Full-stack software engineer with 6 years of experience building scalable
-  web applications and data pipelines. Passionate about developer tooling,
-  distributed systems, and turning ambiguous problems into clean, maintainable
-  solutions. Proven track record delivering high-impact features at Series B
-  and growth-stage startups.
+  Social impact strategy and philanthropy advisory leader with 13+ years of leadership
+  experience building operational, financial, and funding infrastructure across nonprofit,
+  healthcare, community development, transit, and emerging-technology contexts. I help
+  executives, founders, boards, and mission-driven teams translate complex social
+  challenges into fundable strategies, clear execution plans, and durable operating models.
+  Since 2019, I have supported more than $50M in federal, state, and private funding
+  initiatives while leading nonprofit, healthcare, and community-focused programs through
+  fundraising strategy, stakeholder alignment, advisory deliverables, operational planning,
+  and measurable growth.
 
 skills:
-  languages:
-    - Python
-    - TypeScript
-    - Go
-    - SQL
-  frameworks:
-    - FastAPI
-    - React
-    - Next.js
-    - GraphQL
-  infrastructure:
-    - AWS (EC2, S3, Lambda, RDS)
-    - Docker
-    - Kubernetes
-    - Terraform
-  databases:
-    - PostgreSQL
-    - Redis
-    - MongoDB
-  practices:
-    - CI/CD
-    - Test-driven development
-    - Agile / Scrum
-    - System design
+  strategy:
+    - Federal Funding Strategy
+    - Capital Stack Design & Advisory
+    - Go/No-Go Feasibility Analysis
+    - Strategic Planning
+    - Blended Capital Architecture
+    - Funding Pathway Design
+  philanthropy:
+    - Philanthropy Strategy
+    - Nonprofit Leadership & Board Governance
+    - Fundraising & Funder Engagement
+    - Grant Writing & Management
+    - Funder Relationship Management
+  finance:
+    - Financial Modeling & Forecasting
+    - IRR / ROI / NPV Analysis
+    - Pro Forma Development
+    - Capital Roadmap Design
+    - Certified Financial Modeling & Valuation Analyst (CFMVA)
+  partnerships:
+    - Public-Private Partnership Facilitation
+    - Stakeholder Alignment
+    - Executive Relationship Management
+    - Multi-Agency Coordination
+    - Federal Lobbying & Government Relations
+  operations:
+    - Program Development & Launch
+    - Process Optimization & Operational Excellence
+    - Change Management
+    - Operations Management
+    - Project Management
+  healthcare:
+    - Healthcare Administration
+    - Clinical Program Development
+    - AACVPR Standards Compliance
+    - Patient Program Management
 
 experience:
-  - title: Senior Software Engineer
-    company: Acme Corp
-    location: San Francisco, CA
-    start_date: "2022-03"
+  - title: Managing Partner
+    company: G1VE Holdings
+    location: Atlanta, GA
+    start_date: "2026-01"
     end_date: Present
     highlights:
-      - Led migration of monolith to microservices, reducing p99 latency by 40%
-      - Built real-time data pipeline ingesting 50k events/sec using Kafka and Flink
-      - Mentored 3 junior engineers; established team code-review culture
-      - Owned end-to-end delivery of search feature used by 200k daily active users
+      - Direct corporate strategy, capital intelligence operations, and client advisory across the G1VE portfolio, including G1VE Technologies and AFIS
+      - Lead strategic positioning for federal funding, bridge capital, and structured financing solutions serving nonprofits, startups, and mission-driven organizations
+      - Oversee go-to-market strategy for AFIS, a proprietary predictive intelligence platform that surfaces federal funding opportunities upstream of public announcement by analyzing legislative and regulatory signals
+      - Cultivate executive relationships with regional commissions, federal lobbying firms, and grant professional associations (GPA, NGMA)
 
-  - title: Software Engineer
-    company: Beta Startup
+  - title: Strategic Advisor
+    company: G1VE Technologies
+    location: Atlanta, GA
+    start_date: "2023-01"
+    end_date: "2025-12"
+    highlights:
+      - Designed capital stack strategies and Go/No-Go financial models for clients spanning behavioral health, space infrastructure, and community development, supporting over $50M in funded and strategically developed initiatives
+      - Structured blended funding approaches integrating federal and state non-dilutive capital with private investment, repositioning clients from reactive grant-seeking to proactive capital planning
+      - Facilitated stakeholder alignment across public-private partnerships, regional commissions, and institutional funders to accelerate funding timelines and strengthen funder confidence
+      - Developed branded federal funding intelligence report deployed as a lead conversion asset, generating sustained engagement with executive-level prospects
+      - Built $100M financial model and capital funding roadmap for space propulsion startup projecting $1.17B cumulative revenue and $3.99B exit valuation
+
+  - title: Strategic Advisor
+    company: Jade House Recovery
     location: Remote
-    start_date: "2019-06"
-    end_date: "2022-02"
+    start_date: "2025-03"
+    end_date: Present
     highlights:
-      - Designed and built REST + GraphQL APIs consumed by iOS, Android, and web clients
-      - Reduced infrastructure costs by 35% by right-sizing EC2 instances and adding caching
-      - Shipped A/B testing framework adopted by 4 product teams
-      - Improved test coverage from 42% to 85% across core services
+      - Guide capital structure, funder engagement, and grant strategy to drive sustainable expansion of behavioral health services
+      - Prepared and submitted grant applications for recovery transportation and supportive services programming
 
-  - title: Junior Software Engineer
-    company: Dev Agency LLC
-    location: Austin, TX
-    start_date: "2018-01"
-    end_date: "2019-05"
+  - title: Grant Reviewer
+    company: National CASA/GAL Association for Children
+    location: United States (Contract)
+    start_date: "2025-09"
+    end_date: Present
     highlights:
-      - Delivered client-facing web apps using React and Node.js
-      - Integrated third-party payment and auth providers (Stripe, Auth0)
+      - Conduct detailed assessments of funding proposals, evaluating program design, evaluation methods, sustainability, and mission alignment
+      - Provide scoring and written feedback to inform national grant award decisions for child advocacy programs
+
+  - title: Executive Director
+    company: G1VE Atlanta
+    location: Atlanta, GA
+    start_date: "2019-01"
+    end_date: "2023-12"
+    highlights:
+      - Founded and led nonprofit organization focused on transit infrastructure and community development funding strategy
+      - Secured $500K in competitive FTA grant awards, demonstrating proficiency in federal narrative design and financial modeling for merit-based programs
+      - Directed organizational strategy, funder engagement, and program development from inception through multi-year operations
+      - Built public-private stakeholder coalitions to advance transit and community infrastructure initiatives in the Atlanta metropolitan area
+
+  - title: Program Development Lead
+    company: Ochsner Rush Health, Cardiac Rehabilitation
+    location: Meridian, MS
+    start_date: "2023-01"
+    end_date: "2024-12"
+    highlights:
+      - Designed, launched, and managed a new cardiac rehabilitation program, growing patient volume from 0 to 159 within the first year
+      - Developed clinical pathways and education materials aligned with AACVPR standards; managed 20 patients daily
+      - Integrated grant research and funding strategies for long-term program sustainability
+
+  - title: Chief Operating Officer
+    company: Peachtree Surgical and Bariatrics
+    location: Atlanta, GA
+    start_date: "2019-01"
+    end_date: "2020-12"
+    highlights:
+      - Promoted to COO following success in clinical operations; led strategic planning, budgeting, and operational improvements
+      - Increased productivity by 30%, saving $75K annually through process redesign and cross-functional coordination
+
+  - title: Lead Clinical Exercise Physiologist
+    company: Peachtree Surgical and Bariatrics
+    location: Atlanta, GA
+    start_date: "2016-01"
+    end_date: "2019-12"
+    highlights:
+      - Redesigned patient flow to reduce wait times and clinical workload, enhancing overall efficiency
+      - Led clinical staff training and implemented patient support programs, improving satisfaction scores
+
+  - title: Dialysis Exercise Research Consultant
+    company: Emory University
+    location: Atlanta, GA
+    start_date: "2017-01"
+    end_date: "2018-12"
+    highlights:
+      - Developed and implemented protocols for federally funded exercise research, improving patient outcomes for dialysis populations
 
 education:
-  - degree: B.S. Computer Science
-    institution: University of Texas at Austin
-    year: "2017"
-    gpa: "3.7"
-    honors: Magna Cum Laude
+  - degree: MBA, Business Strategy
+    institution: University of Georgia, Terry College of Business
+    year: "2019"
+
+  - degree: MS, Exercise Physiology
+    institution: Life University
+    year: "2013"
 
 projects:
-  - name: OpenMetrics Dashboard
-    description: Open-source observability dashboard with 800+ GitHub stars
-    technologies: [React, Python, ClickHouse]
-    url: https://github.com/janesmith/openmetrics
+  - name: "$8.9M Recovery Housing Capital Strategy"
+    description: >
+      Blended capital architecture for 52-bed trauma-informed recovery housing facility in St. Louis.
+      Built dual-scenario 5-year pro forma with IRR/ROI/NPV analysis producing 103.7% combined ROI
+      and 21.4% IRR. Structured financing combining federal grants, SBA loans, resident contributions,
+      and philanthropic capital.
+    technologies: [Capital Stack Design, Financial Modeling, Federal Grants, SBA Financing]
 
-  - name: AutoDeploy CLI
-    description: Zero-config deployment tool that wraps Terraform and Docker Compose
-    technologies: [Go, Docker, Terraform]
-    url: https://github.com/janesmith/autodeploy
+  - name: "$100M Deep Tech Financial Model"
+    description: >
+      Full-spectrum capital model for space propulsion startup projecting $1.17B cumulative revenue
+      over five years with $3.99B exit valuation. Included milestone-gated tranche disbursement,
+      integrated cap table, and investor-grade KPI/P&L/cash flow deliverables.
+    technologies: [Financial Modeling, Capital Roadmap, Investor Relations, CFMVA]
+
+  - name: "$8M Rural Wastewater Infrastructure Funding"
+    description: >
+      Structured blended USDA Community Facilities Direct Grant, USDA Direct Loan, and CDBG
+      allocation covering 100% of project cost with zero local capital required. Full funding secured
+      for Midwest rural municipality eliminating flooding and infrastructure collapse risk.
+    technologies: [Federal Grants, USDA Programs, CDBG, Blended Capital]
+
+  - name: Zero-Emission Marine Infrastructure Funding Strategy
+    description: >
+      Mapped four innovation pillars (marina charging, vessel tech, data/ML R&D, regional production)
+      to 11+ federal and state programs for clean maritime client in South Florida. Managed
+      SAM.gov/UEI/NEPA/Buy America compliance and structured SBIR narratives.
+    technologies: [Multi-Agency Funding, SBIR, Federal Compliance, Clean Energy]
+
+  - name: Behavioral Health Systems Alignment
+    description: >
+      Designed 36-month cross-system coordination strategy connecting behavioral health, housing,
+      peer navigation, transportation, and Medicaid infrastructure. Built phased operating model
+      from 8-bed pilot to 800+ service capacity with full workforce and governance design.
+    technologies: [Program Design, Medicaid, Behavioral Health, Operational Infrastructure]
 
 certifications:
-  - AWS Certified Solutions Architect – Associate (2023)
-  - Certified Kubernetes Administrator (CKA) (2022)
+  - Certified Financial Modeling & Valuation Analyst (CFMVA) — Corporate Finance Institute
+  - GPA Grant Summit Speaker (2026)
+  - ConnectATL Panelist, Atlanta Regional Commission (2024)
+  - AACVPR Guest Speaker (2020)
+  - Member, Georgia Giving Leadership Council — Grateful Giving
+  - Member, National Education Leadership Council — Grateful Giving
+  - United Way of Greater Atlanta VIP — Board Leadership Development Program

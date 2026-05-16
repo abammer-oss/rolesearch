@@ -1,57 +1,91 @@
-# ──────────────────────────────────────────────────────
-#  JOB SEARCH PREFERENCES  —  tune these to your needs
-# ──────────────────────────────────────────────────────
+# ──────────────────────────────────────────────────────────────────────────────
+#  ANTHONY BAMMER — Job Search Preferences
+#  Executive-level | Social Impact | Philanthropy | Funding Strategy | Advisory
+# ──────────────────────────────────────────────────────────────────────────────
 
-# Titles you're open to (used as search keywords)
+# Roles aligned with Managing Partner / Strategic Advisor background
 job_titles:
-  - Senior Software Engineer
-  - Staff Software Engineer
-  - Software Engineer
-  - Backend Engineer
-  - Full Stack Engineer
-  - Platform Engineer
+  - Chief Development Officer
+  - Vice President of Philanthropy
+  - Chief Impact Officer
+  - VP of Strategic Partnerships
+  - Managing Director
+  - Director of Strategic Partnerships
+  - VP of Social Impact
+  - Chief Strategy Officer
+  - Director of Development
+  - Executive Director
+  - VP of Government Relations
+  - Head of Philanthropy
+  - Director of Federal Funding
+  - Senior Advisor
+  - Principal
+  - VP of Nonprofit Strategy
+  - Director of Capital Strategy
+  - Chief Operating Officer
+  - VP of Community Impact
 
-# Acceptable locations — include "Remote" for remote roles
+# Preferred work locations — Atlanta-based or remote executive roles
 locations:
   - Remote
-  - San Francisco, CA
+  - Atlanta, GA
+  - Washington, DC
   - New York, NY
-  - Austin, TX
 
-# Employment types: full-time | part-time | contract | freelance
+# Employment types
 job_types:
   - full-time
+  - contract
 
-# Industries you prefer (leave empty to search all)
+# Industries aligned with Anthony's background
 industries:
-  - technology
-  - fintech
-  - developer tools
-  - infrastructure
+  - nonprofit
+  - social impact
+  - philanthropy
+  - consulting
+  - community development
+  - healthcare
+  - government
+  - federal funding
+  - behavioral health
+  - foundation
+  - policy
 
-# Minimum annual salary in USD (0 = no filter)
-salary_min: 150000
+# Minimum annual salary (executive-level)
+salary_min: 130000
 
-# Keywords that MUST appear (or be strongly implied) in a good match
+# Keywords that should be present in a strong match
 keywords:
-  - Python
-  - distributed systems
+  - federal funding
+  - nonprofit
+  - philanthropy
+  - capital strategy
+  - social impact
+  - grant
+  - community development
+  - strategic partnerships
+  - fundraising
 
-# Anything here disqualifies a job automatically
+# Anything here disqualifies a posting automatically
 deal_breakers:
-  - blockchain
+  - entry-level
+  - junior
+  - associate degree required
+  - unpaid
+  - cryptocurrency
   - crypto
   - gambling
   - adult content
-  - unpaid
+  - MLM
+  - commission-only
 
-# Companies to skip entirely
+# Companies / orgs to skip
 excluded_companies: []
 
-# Minimum AI match score (0–100) to include in results
-min_match_score: 65
+# Minimum AI match score (0–100) to surface in results
+min_match_score: 60
 
-# How many top matches to auto-generate resume + cover letter for
+# How many top matches get auto-generated tailored resume + cover letter
 auto_generate_top_n: 5
 
 # Maximum jobs to fetch per source per run
