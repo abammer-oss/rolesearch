@@ -296,6 +296,90 @@ def _strip_html(html: str) -> str:
     return re.sub(r"\s+", " ", text).strip()
 
 
+# ── Indeed RSS (broad nonprofit/executive coverage, no auth required) ────────
+
+_INDEED_SEARCHES = [
+    ("chief development officer nonprofit", "remote"),
+    ("vice president philanthropy", "remote"),
+    ("executive director nonprofit", "Atlanta, GA"),
+    ("director of development nonprofit", "remote"),
+    ("chief impact officer", "remote"),
+    ("managing director nonprofit social impact", "remote"),
+    ("director federal grants nonprofit", "remote"),
+    ("VP strategic partnerships nonprofit", "remote"),
+]
+
+
+def fetch_indeed_rss(prefs: JobPreferences) -> list[JobPosting]:
+    """Fetch from Indeed via public RSS — aggregates nonprofit executive listings."""
+    import xml.etree.ElementTree as ET
+
+    jobs: list[JobPosting] = []
+    seen: set[str] = set()
+
+    for query, location in _INDEED_SEARCHES[:5]:
+        params = {"q": query, "l": location, "sort": "date", "fromage": "21"}
+        try:
+            r = _SESSION.get("https://www.indeed.com/rss", params=params, timeout=15)
+            r.raise_for_status()
+            root = ET.fromstring(r.content)
+        except Exception as exc:
+            logger.warning("Indeed RSS failed for '%s': %s", query, exc)
+            continue
+
+        channel = root.find("channel")
+        if channel is None:
+            continue
+
+        for item in channel.findall("item"):
+            title_el  = item.find("title")
+            link_el   = item.find("link")
+            desc_el   = item.find("description")
+            pub_el    = item.find("pubDate")
+            guid_el   = item.find("guid")
+
+            raw_title = (title_el.text or "").strip() if title_el is not None else ""
+            link      = (link_el.text or "").strip()  if link_el  is not None else ""
+            desc      = _strip_html(desc_el.text or "") if desc_el is not None else ""
+            pub_date  = (pub_el.text or "").strip()   if pub_el   is not None else ""
+            guid      = (guid_el.text or link).strip() if guid_el is not None else link
+
+            if not guid:
+                continue
+            jid = _make_id("indeed", guid)
+            if jid in seen:
+                continue
+            seen.add(jid)
+
+            # Indeed RSS title format: "Job Title - Company Name"
+            if " - " in raw_title:
+                parts    = raw_title.rsplit(" - ", 1)
+                job_title = parts[0].strip()
+                company   = parts[1].strip()
+            else:
+                job_title = raw_title
+                company   = ""
+
+            jobs.append(JobPosting(
+                id=jid,
+                title=job_title,
+                company=company,
+                location=location,
+                url=link,
+                description=desc,
+                salary=None,
+                job_type="full-time",
+                source="indeed",
+                posted_at=pub_date,
+                tags=[],
+                remote="remote" in location.lower(),
+            ))
+        time.sleep(0.5)
+
+    logger.info("indeed: fetched %d jobs", len(jobs))
+    return jobs[: prefs.max_jobs_per_source]
+
+
 # ── Idealist.org (nonprofit / social-impact executive roles) ──────────────────
 
 _IDEALIST_TERMS = [
@@ -310,6 +394,13 @@ _IDEALIST_TERMS = [
 ]
 
 
+_IDEALIST_ENDPOINTS = [
+    "https://www.idealist.org/api/listing/search",
+    "https://www.idealist.org/api/v1/listing/search",
+    "https://www.idealist.org/en/api/listing/search",
+]
+
+
 def fetch_idealist(prefs: JobPreferences) -> list[JobPosting]:
     """Fetch from Idealist.org — the premier nonprofit/social-impact job board."""
     jobs: list[JobPosting] = []
@@ -317,9 +408,17 @@ def fetch_idealist(prefs: JobPreferences) -> list[JobPosting]:
 
     for term in _IDEALIST_TERMS[:5]:
         params = {"type": "JOB", "q": term, "page": 0, "pageSize": 20}
-        data = _get("https://www.idealist.org/api/listing/search", params)
+        data = None
+        for endpoint in _IDEALIST_ENDPOINTS:
+            data = _get(endpoint, params)
+            if data is not None:
+                logger.info("idealist: connected via %s", endpoint)
+                break
         if not data:
+            logger.warning("idealist: all endpoints failed for term '%s'", term)
             continue
+
+        logger.debug("idealist raw keys for '%s': %s", term, list(data.keys()) if isinstance(data, dict) else type(data).__name__)
 
         hits = data.get("hits") or data.get("results") or data.get("jobs") or []
         for j in hits:
@@ -498,7 +597,8 @@ def fetch_all_jobs(prefs: JobPreferences) -> list[JobPosting]:
     """Fetch from all configured sources and deduplicate by ID."""
     all_jobs: list[JobPosting] = []
     for fetcher in (
-        fetch_idealist,   # nonprofit/social-impact — highest priority for Anthony
+        fetch_indeed_rss, # broad nonprofit/exec coverage via Indeed RSS — no auth
+        fetch_idealist,   # nonprofit/social-impact dedicated board
         fetch_usajobs,    # federal/government roles (optional, requires API key)
         fetch_themuse,    # Fundraising & Development categories
         fetch_adzuna,     # broad coverage (requires API key)
