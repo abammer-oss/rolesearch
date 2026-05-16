@@ -32,7 +32,7 @@ def _make_id(source: str, raw_id: str) -> str:
     return hashlib.md5(f"{source}:{raw_id}".encode()).hexdigest()
 
 
-# ── Arbeitnow ─────────────────────────────────────────────────────────────────
+# ── Arbeitnow ─────────────────────────────────────────────────────────────────────────────────
 
 def fetch_arbeitnow(prefs: JobPreferences) -> list[JobPosting]:
     jobs: list[JobPosting] = []
@@ -66,7 +66,7 @@ def fetch_arbeitnow(prefs: JobPreferences) -> list[JobPosting]:
     return jobs
 
 
-# ── Remotive ──────────────────────────────────────────────────────────────────
+# ── Remotive ──────────────────────────────────────────────────────────────────────────────────
 
 def fetch_remotive(prefs: JobPreferences) -> list[JobPosting]:
     jobs: list[JobPosting] = []
@@ -103,7 +103,7 @@ def fetch_remotive(prefs: JobPreferences) -> list[JobPosting]:
     return deduped[: prefs.max_jobs_per_source]
 
 
-# ── Jobicy ────────────────────────────────────────────────────────────────────
+# ── Jobicy ────────────────────────────────────────────────────────────────────────────────────
 
 def fetch_jobicy(prefs: JobPreferences) -> list[JobPosting]:
     tags = prefs.keywords[:2] if prefs.keywords else []
@@ -141,7 +141,7 @@ def fetch_jobicy(prefs: JobPreferences) -> list[JobPosting]:
     return jobs
 
 
-# ── Adzuna (optional — requires API key) ──────────────────────────────────────
+# ── Adzuna (optional — requires API key) ──────────────────────────────────────────────────────
 
 def fetch_adzuna(prefs: JobPreferences) -> list[JobPosting]:
     app_id = os.getenv("ADZUNA_APP_ID")
@@ -211,7 +211,7 @@ def fetch_adzuna(prefs: JobPreferences) -> list[JobPosting]:
     return deduped[: prefs.max_jobs_per_source]
 
 
-# ── The Muse (free, no auth — strong nonprofit/philanthropy coverage) ──────────
+# ── The Muse (free, no auth — strong nonprofit/philanthropy coverage) ──────────────────
 
 # Categories on The Muse that match Anthony's profile
 _MUSE_CATEGORIES = [
@@ -296,7 +296,114 @@ def _strip_html(html: str) -> str:
     return re.sub(r"\s+", " ", text).strip()
 
 
-# ── Indeed RSS (broad nonprofit/executive coverage, no auth required) ────────
+# ── Shared RSS helper ────────────────────────────────────────────────────────────────────────────────
+
+def _fetch_rss(url: str, source_name: str) -> list[dict]:
+    """Fetch and parse an RSS feed; return list of raw item dicts."""
+    import xml.etree.ElementTree as ET
+    try:
+        r = _SESSION.get(url, timeout=15)
+        r.raise_for_status()
+        root = ET.fromstring(r.content)
+    except Exception as exc:
+        logger.warning("%s RSS failed (%s): %s", source_name, url, exc)
+        return []
+    channel = root.find("channel")
+    if channel is None:
+        return []
+    items = []
+    for item in channel.findall("item"):
+        def _text(tag: str) -> str:
+            el = item.find(tag)
+            return (el.text or "").strip() if el is not None else ""
+        items.append({
+            "title":    _text("title"),
+            "link":     _text("link"),
+            "desc":     _strip_html(_text("description")),
+            "pub_date": _text("pubDate"),
+            "guid":     _text("guid") or _text("link"),
+        })
+    return items
+
+
+def _rss_to_posting(item: dict, source: str, default_location: str = "Remote") -> JobPosting | None:
+    """Convert a parsed RSS item dict to a JobPosting. Returns None if unusable."""
+    guid = item["guid"]
+    if not guid:
+        return None
+    jid = _make_id(source, guid)
+
+    raw_title = item["title"]
+    # Common RSS title format: "Job Title - Org Name" or "Job Title | Org Name"
+    company = ""
+    for sep in (" - ", " | ", " — "):
+        if sep in raw_title:
+            parts = raw_title.split(sep, 1)
+            raw_title, company = parts[0].strip(), parts[1].strip()
+            break
+
+    return JobPosting(
+        id=jid,
+        title=raw_title,
+        company=company,
+        location=default_location,
+        url=item["link"],
+        description=item["desc"],
+        salary=None,
+        job_type="full-time",
+        source=source,
+        posted_at=item["pub_date"],
+        tags=[],
+        remote="remote" in default_location.lower(),
+    )
+
+
+# ── Philanthropy News Digest Jobs (premier philanthropy exec job board) ────────────────
+
+def fetch_pnd(prefs: JobPreferences) -> list[JobPosting]:
+    """
+    Philanthropy News Digest (Candid/Foundation Center) job listings RSS.
+    Posts CDO, VP Philanthropy, Executive Director, and Director of Development
+    roles from major foundations, nonprofits, and social-impact orgs.
+    """
+    items = _fetch_rss("https://philanthropynewsdigest.org/jobs/rss", "pnd")
+    jobs: list[JobPosting] = []
+    seen: set[str] = set()
+    for item in items:
+        posting = _rss_to_posting(item, "pnd", default_location="USA")
+        if posting and posting.id not in seen:
+            seen.add(posting.id)
+            jobs.append(posting)
+        if len(jobs) >= prefs.max_jobs_per_source:
+            break
+    logger.info("pnd: fetched %d jobs", len(jobs))
+    return jobs
+
+
+# ── Chronicle of Philanthropy Jobs (top nonprofit sector publication) ────────────────
+
+def fetch_chronicle(prefs: JobPreferences) -> list[JobPosting]:
+    """
+    Chronicle of Philanthropy job board RSS — executive nonprofit/philanthropy roles.
+    """
+    items = _fetch_rss("https://jobs.philanthropy.com/rss/jobs/", "chronicle")
+    if not items:
+        # Alternate URL pattern
+        items = _fetch_rss("https://jobs.philanthropy.com/feed/rss2", "chronicle")
+    jobs: list[JobPosting] = []
+    seen: set[str] = set()
+    for item in items:
+        posting = _rss_to_posting(item, "chronicle", default_location="USA")
+        if posting and posting.id not in seen:
+            seen.add(posting.id)
+            jobs.append(posting)
+        if len(jobs) >= prefs.max_jobs_per_source:
+            break
+    logger.info("chronicle: fetched %d jobs", len(jobs))
+    return jobs
+
+
+# ── Indeed RSS (broad coverage — may be rate-limited from cloud IPs) ─────────────────
 
 _INDEED_SEARCHES = [
     ("chief development officer nonprofit", "remote"),
@@ -304,83 +411,32 @@ _INDEED_SEARCHES = [
     ("executive director nonprofit", "Atlanta, GA"),
     ("director of development nonprofit", "remote"),
     ("chief impact officer", "remote"),
-    ("managing director nonprofit social impact", "remote"),
-    ("director federal grants nonprofit", "remote"),
-    ("VP strategic partnerships nonprofit", "remote"),
 ]
 
 
 def fetch_indeed_rss(prefs: JobPreferences) -> list[JobPosting]:
-    """Fetch from Indeed via public RSS — aggregates nonprofit executive listings."""
-    import xml.etree.ElementTree as ET
-
+    """Fetch from Indeed via public RSS — nonprofit executive searches."""
     jobs: list[JobPosting] = []
     seen: set[str] = set()
 
-    for query, location in _INDEED_SEARCHES[:5]:
+    for query, location in _INDEED_SEARCHES:
         params = {"q": query, "l": location, "sort": "date", "fromage": "21"}
-        try:
-            r = _SESSION.get("https://www.indeed.com/rss", params=params, timeout=15)
-            r.raise_for_status()
-            root = ET.fromstring(r.content)
-        except Exception as exc:
-            logger.warning("Indeed RSS failed for '%s': %s", query, exc)
-            continue
-
-        channel = root.find("channel")
-        if channel is None:
-            continue
-
-        for item in channel.findall("item"):
-            title_el  = item.find("title")
-            link_el   = item.find("link")
-            desc_el   = item.find("description")
-            pub_el    = item.find("pubDate")
-            guid_el   = item.find("guid")
-
-            raw_title = (title_el.text or "").strip() if title_el is not None else ""
-            link      = (link_el.text or "").strip()  if link_el  is not None else ""
-            desc      = _strip_html(desc_el.text or "") if desc_el is not None else ""
-            pub_date  = (pub_el.text or "").strip()   if pub_el   is not None else ""
-            guid      = (guid_el.text or link).strip() if guid_el is not None else link
-
-            if not guid:
-                continue
-            jid = _make_id("indeed", guid)
-            if jid in seen:
-                continue
-            seen.add(jid)
-
-            # Indeed RSS title format: "Job Title - Company Name"
-            if " - " in raw_title:
-                parts    = raw_title.rsplit(" - ", 1)
-                job_title = parts[0].strip()
-                company   = parts[1].strip()
-            else:
-                job_title = raw_title
-                company   = ""
-
-            jobs.append(JobPosting(
-                id=jid,
-                title=job_title,
-                company=company,
-                location=location,
-                url=link,
-                description=desc,
-                salary=None,
-                job_type="full-time",
-                source="indeed",
-                posted_at=pub_date,
-                tags=[],
-                remote="remote" in location.lower(),
-            ))
+        items = _fetch_rss(
+            f"https://www.indeed.com/rss?{'&'.join(f'{k}={v}' for k,v in params.items())}",
+            "indeed",
+        )
+        for item in items:
+            posting = _rss_to_posting(item, "indeed", default_location=location)
+            if posting and posting.id not in seen:
+                seen.add(posting.id)
+                jobs.append(posting)
         time.sleep(0.5)
 
     logger.info("indeed: fetched %d jobs", len(jobs))
     return jobs[: prefs.max_jobs_per_source]
 
 
-# ── Idealist.org (nonprofit / social-impact executive roles) ──────────────────
+# ── Idealist.org (nonprofit / social-impact executive roles) ──────────────────────────
 
 _IDEALIST_TERMS = [
     "chief development officer",
@@ -493,7 +549,7 @@ def fetch_idealist(prefs: JobPreferences) -> list[JobPosting]:
     return jobs[: prefs.max_jobs_per_source]
 
 
-# ── USAJOBS (federal / government roles — optional) ───────────────────────────
+# ── USAJOBS (federal / government roles — optional) ───────────────────────────────────
 
 def fetch_usajobs(prefs: JobPreferences) -> list[JobPosting]:
     """
@@ -527,7 +583,7 @@ def fetch_usajobs(prefs: JobPreferences) -> list[JobPosting]:
         params = {
             "Keyword": kw,
             "ResultsPerPage": 25,
-            "SalaryBucket": "130",  # $130K+ (nearest Adzuna-style bucket)
+            "SalaryBucket": "130",
             "WhoMayApply": "public",
         }
         try:
@@ -553,7 +609,6 @@ def fetch_usajobs(prefs: JobPreferences) -> list[JobPosting]:
                 continue
             seen.add(jid)
 
-            # Salary
             pay = pos.get("PositionRemuneration", [{}])[0] if pos.get("PositionRemuneration") else {}
             sal_min = pay.get("MinimumRange")
             sal_max = pay.get("MaximumRange")
@@ -591,14 +646,16 @@ def fetch_usajobs(prefs: JobPreferences) -> list[JobPosting]:
     return jobs[: prefs.max_jobs_per_source]
 
 
-# ── Public entry point ────────────────────────────────────────────────────────
+# ── Public entry point ────────────────────────────────────────────────────────────────────────────
 
 def fetch_all_jobs(prefs: JobPreferences) -> list[JobPosting]:
     """Fetch from all configured sources and deduplicate by ID."""
     all_jobs: list[JobPosting] = []
     for fetcher in (
-        fetch_indeed_rss, # broad nonprofit/exec coverage via Indeed RSS — no auth
-        fetch_idealist,   # nonprofit/social-impact dedicated board
+        fetch_pnd,        # Philanthropy News Digest — sector-specific CDO/philanthropy RSS
+        fetch_chronicle,  # Chronicle of Philanthropy jobs — sector-specific RSS
+        fetch_indeed_rss, # broad nonprofit/exec coverage via Indeed RSS
+        fetch_idealist,   # Idealist.org nonprofit board (API endpoint in discovery)
         fetch_usajobs,    # federal/government roles (optional, requires API key)
         fetch_themuse,    # Fundraising & Development categories
         fetch_adzuna,     # broad coverage (requires API key)
