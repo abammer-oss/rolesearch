@@ -239,23 +239,27 @@ Penalise: roles where he only matches the mission but not the core function.
 ### Dimension 2 — COMPETITIVENESS SCORE (0–100)
 Measures how likely he is to clear screening and be viewed as a credible finalist.
 
-Hard gates that REDUCE this score significantly (−15 to −30 each):
-- Direct major gifts or principal gifts portfolio requirement
-- CPA, CFA, controller, or accounting credential required
-- Investment banking / private equity / M&A pedigree required
-- MBB / top-tier consulting credential required
-- 15+ years at-level executive experience required
-- Specific industry domain required (food banking, pharma, DAF ops, Medicaid billing, etc.)
-- Managing teams of 20+ people required (no direct evidence at this scale)
-- Operating budget ownership of $10M+ required (his largest is advisory, not direct ownership)
+Hard gates that REDUCE this score (−10 to −25 each — calibrate by how explicitly required):
+- Direct major gifts or principal gifts portfolio ownership explicitly required (−15 to −20)
+  NOTE: If the role is CDO/VP Development at a growth-stage or mid-size nonprofit and major gifts
+  is listed but not the *sole* focus, apply only a modest penalty (−10). His philanthropy strategy,
+  funder engagement, and federal funding track record are directly transferable to many CDO roles.
+- CPA, CFA, controller, or accounting credential explicitly required (−20)
+- Investment banking / private equity / M&A pedigree explicitly required (−20)
+- MBB / top-tier consulting credential explicitly required (−15)
+- 15+ years at-level executive experience *explicitly* required (−10 to −15)
+- Specific industry domain required with no transferable path: food banking operations,
+  DAF administration, pharma clinical, Medicaid billing (−15 to −20)
+- Managing teams of 20+ direct reports explicitly required (−10)
 
 Positive signals that INCREASE this score:
 - Cross-sector / hybrid profiles explicitly valued
-- Growth-stage or turnaround org (his consulting/advisory model fits)
-- Federal funding, philanthropy strategy, or capital advisory listed as primary function
-- Mission-driven org in healthcare, community development, or social impact (authentic fit)
+- Growth-stage, turnaround, or capacity-building org (his consulting/advisory model fits well)
+- Federal funding, philanthropy strategy, or capital advisory is the primary function
+- Mission-driven org in healthcare, community development, behavioral health, or social impact
 - Atlanta-based or remote (reduces geographic friction)
 - CFMVA or financial modeling explicitly valued
+- Role is newly created or org is expanding (less entrenched incumbent preference)
 
 ### Dimension 3 — APPLICATION ROI SCORE (0–100)
 Measures whether applying this week is worth the time investment.

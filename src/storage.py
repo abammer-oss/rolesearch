@@ -167,7 +167,7 @@ def get_new_matches_for_notification(limit: int = 20) -> list[dict]:
                       j.job_type, j.source, j.remote, j.posted_at
                FROM matches m
                JOIN jobs j ON j.id = m.job_id
-               WHERE m.recommendation NOT IN ('skip', 'track_only')
+               WHERE m.recommendation != 'skip'
                  AND j.is_active = 1
                  AND m.issue_created = 0
                ORDER BY m.priority_rank ASC, m.score DESC

@@ -18,7 +18,8 @@ _TIER_LABELS = {
     2: ("tier-2-apply-outreach", "ddaa00", "Priority 2 — Apply Selectively or Outreach First (75–84)"),
     3: ("tier-3-track",          "0075ca", "Priority 3 — Track Only (65–74)"),
 }
-_TIER_ICONS = {1: "🚀", 2: "⚡", 3: "🔍"}
+_TIER_ICONS  = {1: "🚀", 2: "⚡", 3: "🔍"}
+_TRACK_LABEL = ("tier-3-track", "0075ca", "Priority 3 — Track Only (65–74)")
 
 _REC_DISPLAY = {
     "apply_now":          "🚀 APPLY NOW",
