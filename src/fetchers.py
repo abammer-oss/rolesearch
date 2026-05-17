@@ -295,29 +295,31 @@ def _strip_html(html: str) -> str:
 # ── Shared RSS helper ────────────────────────────────────────────────────────────────────────────────
 
 def _fetch_rss(url: str, source_name: str) -> list[dict]:
-    """Fetch and parse an RSS feed; return list of raw item dicts."""
-    import xml.etree.ElementTree as ET
+    """Fetch and parse an RSS feed using feedparser (handles malformed XML gracefully)."""
+    import feedparser
     try:
         r = _SESSION.get(url, timeout=15)
         r.raise_for_status()
-        root = ET.fromstring(r.content)
     except Exception as exc:
         logger.warning("%s RSS failed (%s): %s", source_name, url, exc)
         return []
-    channel = root.find("channel")
-    if channel is None:
+    feed = feedparser.parse(r.content)
+    if feed.bozo and not feed.entries:
+        logger.warning("%s RSS parse error (%s): %s", source_name, url, feed.bozo_exception)
         return []
     items = []
-    for item in channel.findall("item"):
-        def _text(tag: str) -> str:
-            el = item.find(tag)
-            return (el.text or "").strip() if el is not None else ""
+    for entry in feed.entries:
+        title    = entry.get("title", "")
+        link     = entry.get("link", "")
+        desc     = _strip_html(entry.get("summary", entry.get("description", "")))
+        pub_date = entry.get("published", entry.get("updated", ""))
+        guid     = entry.get("id", link)
         items.append({
-            "title":    _text("title"),
-            "link":     _text("link"),
-            "desc":     _strip_html(_text("description")),
-            "pub_date": _text("pubDate"),
-            "guid":     _text("guid") or _text("link"),
+            "title":    title,
+            "link":     link,
+            "desc":     desc,
+            "pub_date": pub_date,
+            "guid":     guid or link,
         })
     return items
 
@@ -704,8 +706,7 @@ def fetch_all_jobs(prefs: JobPreferences) -> list[JobPosting]:
         fetch_jsearch,    # Google Jobs aggregator via RapidAPI — cloud-safe, requires RAPIDAPI_KEY
         fetch_themuse,    # Fundraising & Development categories — confirmed working
         fetch_remotive,   # remote-first roles — confirmed working
-        fetch_pnd,        # Philanthropy News Digest RSS (may be Cloudflare-blocked)
-        fetch_chronicle,  # Chronicle of Philanthropy RSS (may be Cloudflare-blocked)
+        fetch_pnd,        # Philanthropy News Digest RSS — accessible from GH Actions
         fetch_indeed_rss, # Indeed RSS (may be Cloudflare-blocked)
         fetch_idealist,   # Idealist.org (API endpoint unconfirmed)
         fetch_usajobs,    # federal/government roles — requires USAJOBS_API_KEY
