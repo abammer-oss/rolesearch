@@ -144,8 +144,8 @@ def fetch_jobicy(prefs: JobPreferences) -> list[JobPosting]:
 # ── Adzuna (optional — requires API key) ──────────────────────────────────────────────────────
 
 def fetch_adzuna(prefs: JobPreferences) -> list[JobPosting]:
-    app_id = os.getenv("ADZUNA_APP_ID")
-    app_key = os.getenv("ADZUNA_APP_KEY")
+    app_id = (os.getenv("ADZUNA_APP_ID") or "").strip()
+    app_key = (os.getenv("ADZUNA_APP_KEY") or "").strip()
     if not app_id or not app_key:
         return []
 
@@ -296,6 +296,7 @@ def _strip_html(html: str) -> str:
 
 def _fetch_rss(url: str, source_name: str) -> list[dict]:
     """Fetch and parse an RSS feed using feedparser (handles malformed XML gracefully)."""
+    import re
     import feedparser
     try:
         r = _SESSION.get(url, timeout=15)
@@ -303,7 +304,11 @@ def _fetch_rss(url: str, source_name: str) -> list[dict]:
     except Exception as exc:
         logger.warning("%s RSS failed (%s): %s", source_name, url, exc)
         return []
-    feed = feedparser.parse(r.content)
+    # Strip characters invalid in XML 1.0 (e.g. bare & or stray control chars)
+    content = re.sub(rb'[^\x09\x0A\x0D\x20-\x7E\x80-\xFFFD]', b'', r.content)
+    # Replace unescaped & that aren't part of an entity reference
+    content = re.sub(rb'&(?!(?:[a-zA-Z][a-zA-Z0-9]*|#[0-9]+|#x[0-9a-fA-F]+);)', b'&amp;', content)
+    feed = feedparser.parse(content)
     if feed.bozo and not feed.entries:
         logger.warning("%s RSS parse error (%s): %s", source_name, url, feed.bozo_exception)
         return []
