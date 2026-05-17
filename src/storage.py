@@ -89,6 +89,15 @@ def _add_column_if_missing(con: sqlite3.Connection, table: str, col: str, typede
         con.execute(f"ALTER TABLE {table} ADD COLUMN {col} {typedef}")
 
 
+def clear_matches() -> int:
+    """Delete all match scores so every job gets re-scored on next run. Returns count deleted."""
+    with _conn() as con:
+        n = con.execute("SELECT COUNT(*) FROM matches").fetchone()[0]
+        con.execute("DELETE FROM matches")
+    logger.info("Cleared %d match records for full rescan", n)
+    return n
+
+
 def known_job_ids() -> set[str]:
     with _conn() as con:
         rows = con.execute("SELECT id FROM jobs").fetchall()

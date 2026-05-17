@@ -14,6 +14,7 @@ from src.generator import generate_documents
 from src.matcher import match_jobs
 from src.models import JobPosting, JobPreferences, Resume
 from src.storage import (
+    clear_matches,
     documents_exist,
     get_job,
     get_unmatched_jobs,
@@ -62,6 +63,12 @@ class RoleSearchAgent:
     def refresh(self, console=None) -> list[dict]:
         """Fetch fresh jobs, validate, score, and generate docs for top matches."""
         _log = console.log if console else logger.info
+
+        force_rescan = os.getenv("FORCE_RESCAN", "false").lower() in ("true", "1", "yes")
+        if force_rescan:
+            n = clear_matches()
+            msg = f"FORCE_RESCAN: cleared {n} existing match records — all jobs will be re-scored."
+            _log(f"[bold yellow]{msg}[/]" if console else msg)
 
         _log("[bold cyan]Fetching jobs from all sources…[/]" if console else "Fetching jobs…")
         raw_jobs = fetch_all_jobs(self.prefs)
