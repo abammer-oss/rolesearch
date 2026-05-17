@@ -14,12 +14,21 @@ logger = logging.getLogger(__name__)
 _GH_API = "https://api.github.com"
 
 _TIER_LABELS = {
-    1: ("tier-1-apply-now",  "00aa00", "Score ≥80 — Apply Immediately"),
-    2: ("tier-2-apply-soon", "ddaa00", "Score 65–79 — Apply Soon"),
-    3: ("tier-3-consider",   "0075ca", "Score 50–64 — Worth Considering"),
+    1: ("tier-1-apply-now",      "00aa00", "Priority 1 — Apply Now (composite ≥85)"),
+    2: ("tier-2-apply-outreach", "ddaa00", "Priority 2 — Apply Selectively or Outreach First (75–84)"),
+    3: ("tier-3-track",          "0075ca", "Priority 3 — Track Only (65–74)"),
 }
 _TIER_ICONS = {1: "🚀", 2: "⚡", 3: "🔍"}
-_GO_LABELS  = {"apply": "✅ GO", "maybe": "⚠️ MAYBE", "skip": "❌ SKIP"}
+
+_REC_DISPLAY = {
+    "apply_now":          "🚀 APPLY NOW",
+    "apply_selectively":  "⚡ APPLY SELECTIVELY",
+    "outreach_first":     "📨 OUTREACH FIRST",
+    "track_only":         "👁 TRACK ONLY",
+    "skip":               "✗ SKIP",
+    "apply":              "✅ GO",
+    "maybe":              "⚠️ MAYBE",
+}
 
 
 def _headers() -> dict:
@@ -43,7 +52,6 @@ def _repo() -> str:
 # ── Label setup ───────────────────────────────────────────────────────────────
 
 def ensure_labels(repo: str) -> None:
-    """Create required labels in the repo if they don't already exist."""
     all_labels = [
         ("job-match", "1d76db", "AI-matched job from rolesearch"),
         *[(name, color, desc) for name, color, desc in _TIER_LABELS.values()],
@@ -63,7 +71,6 @@ def ensure_labels(repo: str) -> None:
 # ── Deduplication ─────────────────────────────────────────────────────────────
 
 def issue_already_exists(repo: str, job_id: str) -> bool:
-    """Check open issues for this job_id to avoid duplicates on DB cache miss."""
     try:
         resp = requests.get(
             f"{_GH_API}/repos/{repo}/issues",
@@ -83,15 +90,31 @@ def issue_already_exists(repo: str, job_id: str) -> bool:
 
 # ── Issue body ────────────────────────────────────────────────────────────────
 
+def _parse_list(value) -> list:
+    if isinstance(value, str):
+        try:
+            return json.loads(value)
+        except Exception:
+            return []
+    return value or []
+
+
 def _build_body(match: dict, repo: str) -> str:
     rank     = match.get("priority_rank") or 3
     rec      = match.get("recommendation", "maybe")
     score    = match["score"]
+    fit      = match.get("fit_score") or 0
+    comp     = match.get("competitiveness_score") or 0
+    roi      = match.get("roi_score") or 0
     icon     = _TIER_ICONS.get(rank, "🔍")
-    decision = _GO_LABELS.get(rec, rec.upper())
+    decision = _REC_DISPLAY.get(rec, rec.upper())
 
-    key_matches = json.loads(match["key_matches"]) if isinstance(match["key_matches"], str) else match["key_matches"]
-    gaps        = json.loads(match["gaps"])        if isinstance(match["gaps"], str)        else match["gaps"]
+    key_matches   = _parse_list(match["key_matches"])
+    gaps          = _parse_list(match["gaps"])
+    resume_angles = _parse_list(match.get("resume_angles"))
+    risks         = _parse_list(match.get("risks"))
+    outreach      = match.get("outreach_strategy") or ""
+    exec_summary  = match.get("executive_summary") or ""
 
     matches_md = "\n".join(f"- {m}" for m in key_matches) or "- —"
     gaps_md    = "\n".join(f"- {g}" for g in gaps)        or "- None identified"
@@ -111,14 +134,42 @@ def _build_body(match: dict, repo: str) -> str:
     source    = match.get("source", "").title()
     job_id    = match["job_id"]
 
-    tier_name = {1: "APPLY IMMEDIATELY", 2: "APPLY SOON", 3: "WORTH CONSIDERING"}.get(rank, "")
+    tier_name = {1: "APPLY NOW", 2: "APPLY / OUTREACH", 3: "TRACK"}.get(rank, "")
+
+    # Three-score table (hide sub-scores if this is a legacy single-score match)
+    if fit or comp or roi:
+        score_table = f"""\
+| Score | Value | Weight |
+|---|---|---|
+| **Fit** | {fit} / 100 | 40% — resume + lane alignment |
+| **Competitiveness** | {comp} / 100 | 35% — screening probability |
+| **Application ROI** | {roi} / 100 | 25% — effort vs. upside |
+| **Composite** | **{score} / 100** | — |
+"""
+    else:
+        score_table = f"**Score:** {score} / 100\n"
+
+    resume_angles_md = (
+        "\n".join(f"{i+1}. {a}" for i, a in enumerate(resume_angles))
+        if resume_angles else "_Not available_"
+    )
+    risks_md = (
+        "\n".join(f"- ⚠️ {r}" for r in risks)
+        if risks else (
+            "\n".join(f"- {g}" for g in gaps) or "- None identified"
+        )
+    )
+    outreach_section = (
+        f"\n### Outreach Strategy\n{outreach}\n"
+        if outreach and rec in ("outreach_first", "apply_selectively")
+        else ""
+    )
 
     return f"""\
 ## {icon} Tier {rank} — {tier_name}
 
 | Field | Detail |
 |---|---|
-| **Score** | {score} / 100 |
 | **Decision** | {decision} |
 | **Location** | {match['location']}{age_line} |
 | **Salary** | {salary_md} |
@@ -126,17 +177,26 @@ def _build_body(match: dict, repo: str) -> str:
 
 ---
 
-### Executive Summary
-{match.get('executive_summary') or '_Not available_'}
+### Scores
+
+{score_table}
 
 ---
+
+### Executive Summary
+{exec_summary or '_Not available_'}
+
+---
+
+### Lead With — Top 3 Resume Angles
+{resume_angles_md}
 
 ### Key Matches
 {matches_md}
 
-### Gaps
-{gaps_md}
-
+### Risks & Gaps
+{risks_md}
+{outreach_section}
 ---
 
 ### Next Steps
@@ -158,18 +218,16 @@ python main.py generate {job_id}
 # ── Public entry point ────────────────────────────────────────────────────────
 
 def create_issue(match: dict) -> str | None:
-    """
-    Open a GitHub Issue for a job match.
-    Returns the issue URL on success, None on failure.
-    """
     repo  = _repo()
     rank  = match.get("priority_rank") or 3
     score = match["score"]
     icon  = _TIER_ICONS.get(rank, "🔍")
+    rec   = match.get("recommendation", "maybe")
+    decision = _REC_DISPLAY.get(rec, rec.upper())
 
-    title = f"{icon} [Score: {score}] {match['title']} @ {match['company']}"
+    title = f"{icon} [{decision}] {match['title']} @ {match['company']} — Score {score}"
     body  = _build_body(match, repo)
-    labels = ["job-match", _TIER_LABELS[rank][0]]
+    labels = ["job-match", _TIER_LABELS[min(rank, 3)][0]]
 
     try:
         resp = requests.post(
@@ -189,11 +247,6 @@ def create_issue(match: dict) -> str | None:
 
 
 def notify_new_matches(matches: list[dict]) -> int:
-    """
-    Create GitHub Issues for a list of matches.
-    Skips any that already have an open issue (dedup by job_id in body).
-    Returns count of issues created.
-    """
     if not matches:
         return 0
 

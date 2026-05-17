@@ -80,13 +80,30 @@ class JobPosting(BaseModel):
 
 class MatchResult(BaseModel):
     job_id: str
-    score: int = Field(ge=0, le=100)
+
+    # Three-dimension scores (new)
+    fit_score: int = Field(ge=0, le=100, default=0)
+    competitiveness_score: int = Field(ge=0, le=100, default=0)
+    roi_score: int = Field(ge=0, le=100, default=0)
+
+    # Composite score: fit*0.40 + competitiveness*0.35 + roi*0.25
+    # Populated by score_batch(); falls back to legacy single score for old DB rows.
+    score: int = Field(ge=0, le=100, default=0)
+
     reasoning: str
     key_matches: list[str]
     gaps: list[str]
-    recommendation: str  # "apply" | "maybe" | "skip"
-    executive_summary: str = ""  # 2-3 sentence role overview tailored to candidate
-    priority_rank: int = 3       # 1=apply immediately, 2=apply soon, 3=consider
+
+    # New recommendation values: apply_now | apply_selectively | outreach_first | track_only | skip
+    # Legacy values "apply" / "maybe" are still accepted by display/storage code.
+    recommendation: str
+
+    executive_summary: str = ""
+    priority_rank: int = 3          # 1=Apply Now, 2=Apply Selectively/Outreach, 3=Track/Skip
+
+    resume_angles: list[str] = []   # top 3 resume angles to emphasise
+    risks: list[str] = []           # top 3 risks / gaps to flag
+    outreach_strategy: str = ""     # suggested outreach if applicable
 
 
 class GeneratedDocuments(BaseModel):

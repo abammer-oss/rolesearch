@@ -34,9 +34,30 @@ console = Console()
 # ── Tier config ─────────────────────────────────────────────────────────────────────────────────
 
 _TIERS = {
-    1: ("APPLY IMMEDIATELY", "bold green", "🚀"),
-    2: ("APPLY SOON",        "bold yellow", "⚡"),
-    3: ("WORTH CONSIDERING", "bold cyan",   "🔍"),
+    1: ("APPLY NOW",          "bold green",  "🚀"),
+    2: ("APPLY / OUTREACH",   "bold yellow", "⚡"),
+    3: ("TRACK / CONSIDER",   "bold cyan",   "🔍"),
+}
+
+_REC_LABELS = {
+    "apply_now":          "[bold green]🚀  APPLY NOW[/]",
+    "apply_selectively":  "[bold yellow]⚡  APPLY SELECTIVELY[/]",
+    "outreach_first":     "[bold blue]📨  OUTREACH FIRST[/]",
+    "track_only":         "[cyan]👁  TRACK ONLY[/]",
+    "skip":               "[red]✗  SKIP[/]",
+    # legacy
+    "apply":              "[bold green]✅  GO — Apply now[/]",
+    "maybe":              "[yellow]⚠   MAYBE — Apply if interested[/]",
+}
+
+_REC_SHORT = {
+    "apply_now":         "[bold green]🚀 APPLY NOW[/]",
+    "apply_selectively": "[yellow]⚡ SELECTIVE[/]",
+    "outreach_first":    "[bold blue]📨 OUTREACH[/]",
+    "track_only":        "[cyan]👁 TRACK[/]",
+    "skip":              "[red]✗ SKIP[/]",
+    "apply":             "[bold green]✅ GO[/]",
+    "maybe":             "[yellow]⚠ MAYBE[/]",
 }
 
 
@@ -233,7 +254,9 @@ def _display_ranked(rows: list[dict]) -> None:
 
 
 def _print_executive_table(rows: list[dict]) -> None:
-    """Compact ranked summary table."""
+    """Compact ranked summary table with three-dimension scores."""
+    from src.validator import _parse_date
+
     table = Table(
         title="[bold]Ranked Job Matches",
         box=box.ROUNDED,
@@ -241,25 +264,32 @@ def _print_executive_table(rows: list[dict]) -> None:
         header_style="bold magenta",
         expand=True,
     )
-    table.add_column("Rank", width=5, justify="center")
-    table.add_column("Score", width=7, justify="center")
-    table.add_column("Decision", width=10, justify="center")
+    table.add_column("Rank",     width=5,  justify="center")
+    table.add_column("Fit",      width=5,  justify="center")
+    table.add_column("Comp",     width=5,  justify="center")
+    table.add_column("ROI",      width=5,  justify="center")
+    table.add_column("Overall",  width=7,  justify="center")
+    table.add_column("Decision", width=12, justify="center")
     table.add_column("Title + Company", style="bold")
     table.add_column("Location", style="green")
-    table.add_column("Salary", style="yellow")
-    table.add_column("Age", width=8, justify="right", style="dim")
-    table.add_column("ID", width=10, style="dim")
+    table.add_column("Salary",   style="yellow")
+    table.add_column("Age",      width=8,  justify="right", style="dim")
+    table.add_column("ID",       width=10, style="dim")
 
-    _go_style = {"apply": "[bold green]✅ GO[/]", "maybe": "[yellow]⚠ MAYBE[/]", "skip": "[red]✗ SKIP[/]"}
-    _score_color = lambda s: "green" if s >= 80 else "yellow" if s >= 65 else "red"
-
-    from src.validator import _parse_date
-    from datetime import datetime, timezone
+    def _sc(s: int) -> str:
+        if s == 0:
+            return "[dim]—[/]"
+        c = "green" if s >= 80 else "yellow" if s >= 65 else "red"
+        return f"[{c}]{s}[/]"
 
     for i, r in enumerate(rows, 1):
-        rank = r.get("priority_rank") or 3
-        icon = _TIERS[rank][2]
+        rank  = r.get("priority_rank") or 3
+        icon  = _TIERS[rank][2]
         score = r["score"]
+        fit   = r.get("fit_score") or 0
+        comp  = r.get("competitiveness_score") or 0
+        roi   = r.get("roi_score") or 0
+        rec   = r.get("recommendation", "maybe")
 
         age_label = "—"
         if r.get("posted_at"):
@@ -270,8 +300,11 @@ def _print_executive_table(rows: list[dict]) -> None:
 
         table.add_row(
             f"{icon} #{i}",
-            f"[{_score_color(score)}]{score}[/]",
-            _go_style.get(r["recommendation"], r["recommendation"]),
+            _sc(fit),
+            _sc(comp),
+            _sc(roi),
+            _sc(score),
+            _REC_SHORT.get(rec, rec),
             f"{r['title']}\n[dim]{r['company']}[/]",
             r["location"],
             r.get("salary") or "—",
@@ -286,24 +319,35 @@ def _print_job_card(r: dict, position: int) -> None:
     rank = r.get("priority_rank") or 3
     _, color, icon = _TIERS[rank]
     score = r["score"]
-    score_color = "green" if score >= 80 else "yellow" if score >= 65 else "red"
+    fit   = r.get("fit_score") or 0
+    comp  = r.get("competitiveness_score") or 0
+    roi   = r.get("roi_score") or 0
+    rec   = r.get("recommendation", "maybe")
 
-    go_no_go = {
-        "apply": "[bold green]✅  GO — Apply now[/]",
-        "maybe": "[yellow]⚠   MAYBE — Apply if interested[/]",
-        "skip":  "[red]✗   NO-GO — Skip[/]",
-    }.get(r["recommendation"], r["recommendation"])
+    def _sc(label: str, s: int) -> str:
+        if s == 0:
+            return f"[dim]{label}: —[/]"
+        c = "green" if s >= 80 else "yellow" if s >= 65 else "red"
+        return f"[dim]{label}:[/] [{c} bold]{s}[/]"
 
-    key_matches = json.loads(r["key_matches"]) if isinstance(r["key_matches"], str) else r["key_matches"]
-    gaps = json.loads(r["gaps"]) if isinstance(r["gaps"], str) else r["gaps"]
-    exec_summary = r.get("executive_summary") or ""
+    key_matches    = json.loads(r["key_matches"])    if isinstance(r["key_matches"], str)    else r["key_matches"]
+    gaps           = json.loads(r["gaps"])           if isinstance(r["gaps"], str)           else r["gaps"]
+    resume_angles  = json.loads(r.get("resume_angles") or "[]") if isinstance(r.get("resume_angles"), str) else (r.get("resume_angles") or [])
+    risks          = json.loads(r.get("risks") or "[]")         if isinstance(r.get("risks"), str)         else (r.get("risks") or [])
+    outreach       = r.get("outreach_strategy") or ""
+    exec_summary   = r.get("executive_summary") or ""
 
     body = Text()
 
-    body.append(f"  {go_no_go}  ", style="")
-    body.append(f"Score: ", style="dim")
-    body.append(f"{score}/100\n\n", style=score_color + " bold")
+    # Recommendation + scores
+    body.append(f"  {_REC_LABELS.get(rec, rec)}\n", style="")
+    score_line = "  " + "   ".join([
+        _sc("Fit", fit), _sc("Comp", comp), _sc("ROI", roi),
+        f"[dim]Overall:[/] [{'green' if score >= 80 else 'yellow' if score >= 65 else 'red'} bold]{score}[/]",
+    ]) + "\n\n"
+    body.append(score_line, style="")
 
+    # Meta
     meta_parts = [r["location"]]
     if r.get("salary"):
         meta_parts.append(r["salary"])
@@ -311,30 +355,58 @@ def _print_job_card(r: dict, position: int) -> None:
         meta_parts.append(r["job_type"])
     body.append("  " + "  |  ".join(meta_parts) + "\n\n", style="dim")
 
+    # Executive summary
     if exec_summary:
         body.append("  EXECUTIVE SUMMARY\n", style="bold underline")
         for line in _wrap(exec_summary, 90):
             body.append(f"  {line}\n", style="")
         body.append("\n")
 
-    if key_matches:
-        body.append("  KEY MATCHES  ", style="bold green")
-        body.append("  ".join(f"[green]{m}[/]" for m in key_matches[:6]))
+    # Resume angles
+    if resume_angles:
+        body.append("  LEAD WITH\n", style="bold green underline")
+        for a in resume_angles[:3]:
+            body.append(f"  • {a}\n", style="green")
         body.append("\n")
 
-    if gaps:
-        body.append("  GAPS         ", style="bold yellow")
-        body.append("  ".join(f"[yellow]{g}[/]" for g in gaps[:4]))
+    # Key matches
+    if key_matches:
+        body.append("  KEY MATCHES  ", style="bold green")
+        body.append("  ".join(f"[green]{m}[/]" for m in key_matches[:5]))
+        body.append("\n")
+
+    # Risks
+    if risks:
+        body.append("  RISKS / GAPS\n", style="bold yellow underline")
+        for risk in risks[:3]:
+            body.append(f"  ⚠ {risk}\n", style="yellow")
+        body.append("\n")
+    elif gaps:
+        body.append("  GAPS  ", style="bold yellow")
+        body.append("  ".join(f"[yellow]{g}[/]" for g in gaps[:3]))
+        body.append("\n\n")
+
+    # Outreach strategy
+    if outreach and rec in ("outreach_first", "apply_selectively"):
+        body.append("  OUTREACH\n", style="bold blue underline")
+        for line in _wrap(outreach, 90):
+            body.append(f"  {line}\n", style="blue")
         body.append("\n")
 
     body.append(f"\n  Apply:  {r.get('url', '—')}\n", style="dim")
     body.append(f"  Docs:   python main.py generate {r['job_id']}\n", style="dim")
 
-    border = "green" if r["recommendation"] == "apply" else "yellow" if r["recommendation"] == "maybe" else "red"
+    _border = {
+        "apply_now": "green", "apply": "green",
+        "apply_selectively": "yellow", "maybe": "yellow",
+        "outreach_first": "blue",
+        "track_only": "cyan",
+    }.get(rec, "red")
+
     console.print(Panel(
         body,
         title=f"[{color}]#{position}  {r['title']}[/]  [dim]@[/]  [cyan bold]{r['company']}[/]",
-        border_style=border,
+        border_style=_border,
         padding=(0, 1),
     ))
     console.print()

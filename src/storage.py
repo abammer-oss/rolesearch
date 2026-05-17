@@ -42,16 +42,22 @@ def init_db() -> None:
             );
 
             CREATE TABLE IF NOT EXISTS matches (
-                job_id            TEXT PRIMARY KEY,
-                score             INTEGER,
-                reasoning         TEXT,
-                key_matches       TEXT,
-                gaps              TEXT,
-                recommendation    TEXT,
-                executive_summary TEXT DEFAULT '',
-                priority_rank     INTEGER DEFAULT 3,
-                issue_created     INTEGER DEFAULT 0,
-                matched_at        TEXT DEFAULT (datetime('now'))
+                job_id                TEXT PRIMARY KEY,
+                score                 INTEGER,
+                fit_score             INTEGER DEFAULT 0,
+                competitiveness_score INTEGER DEFAULT 0,
+                roi_score             INTEGER DEFAULT 0,
+                reasoning             TEXT,
+                key_matches           TEXT,
+                gaps                  TEXT,
+                recommendation        TEXT,
+                executive_summary     TEXT DEFAULT '',
+                priority_rank         INTEGER DEFAULT 3,
+                resume_angles         TEXT DEFAULT '[]',
+                risks                 TEXT DEFAULT '[]',
+                outreach_strategy     TEXT DEFAULT '',
+                issue_created         INTEGER DEFAULT 0,
+                matched_at            TEXT DEFAULT (datetime('now'))
             );
 
             CREATE TABLE IF NOT EXISTS documents (
@@ -64,11 +70,17 @@ def init_db() -> None:
             );
         """)
         # Migrations for databases created before these columns existed
-        _add_column_if_missing(con, "jobs", "is_active", "INTEGER DEFAULT 1")
-        _add_column_if_missing(con, "jobs", "last_checked_at", "TEXT")
-        _add_column_if_missing(con, "matches", "executive_summary", "TEXT DEFAULT ''")
-        _add_column_if_missing(con, "matches", "priority_rank", "INTEGER DEFAULT 3")
-        _add_column_if_missing(con, "matches", "issue_created", "INTEGER DEFAULT 0")
+        _add_column_if_missing(con, "jobs",    "is_active",             "INTEGER DEFAULT 1")
+        _add_column_if_missing(con, "jobs",    "last_checked_at",       "TEXT")
+        _add_column_if_missing(con, "matches", "executive_summary",     "TEXT DEFAULT ''")
+        _add_column_if_missing(con, "matches", "priority_rank",         "INTEGER DEFAULT 3")
+        _add_column_if_missing(con, "matches", "issue_created",         "INTEGER DEFAULT 0")
+        _add_column_if_missing(con, "matches", "fit_score",             "INTEGER DEFAULT 0")
+        _add_column_if_missing(con, "matches", "competitiveness_score", "INTEGER DEFAULT 0")
+        _add_column_if_missing(con, "matches", "roi_score",             "INTEGER DEFAULT 0")
+        _add_column_if_missing(con, "matches", "resume_angles",         "TEXT DEFAULT '[]'")
+        _add_column_if_missing(con, "matches", "risks",                 "TEXT DEFAULT '[]'")
+        _add_column_if_missing(con, "matches", "outreach_strategy",     "TEXT DEFAULT ''")
 
 
 def _add_column_if_missing(con: sqlite3.Connection, table: str, col: str, typedef: str) -> None:
@@ -112,13 +124,16 @@ def save_match(m: MatchResult) -> None:
     with _conn() as con:
         con.execute(
             """INSERT OR REPLACE INTO matches
-               (job_id, score, reasoning, key_matches, gaps, recommendation,
-                executive_summary, priority_rank)
-               VALUES (?,?,?,?,?,?,?,?)""",
+               (job_id, score, fit_score, competitiveness_score, roi_score,
+                reasoning, key_matches, gaps, recommendation,
+                executive_summary, priority_rank,
+                resume_angles, risks, outreach_strategy)
+               VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
             (
-                m.job_id, m.score, m.reasoning,
-                json.dumps(m.key_matches), json.dumps(m.gaps),
+                m.job_id, m.score, m.fit_score, m.competitiveness_score, m.roi_score,
+                m.reasoning, json.dumps(m.key_matches), json.dumps(m.gaps),
                 m.recommendation, m.executive_summary, m.priority_rank,
+                json.dumps(m.resume_angles), json.dumps(m.risks), m.outreach_strategy,
             ),
         )
 
@@ -134,14 +149,16 @@ def get_new_matches_for_notification(limit: int = 20) -> list[dict]:
     """Return top matches that haven't had a GitHub Issue created yet."""
     with _conn() as con:
         rows = con.execute(
-            """SELECT m.job_id, m.score, m.reasoning, m.key_matches, m.gaps,
+            """SELECT m.job_id, m.score, m.fit_score, m.competitiveness_score, m.roi_score,
+                      m.reasoning, m.key_matches, m.gaps,
                       m.recommendation, m.executive_summary, m.priority_rank,
+                      m.resume_angles, m.risks, m.outreach_strategy,
                       m.issue_created, m.matched_at,
                       j.title, j.company, j.location, j.url, j.salary,
                       j.job_type, j.source, j.remote, j.posted_at
                FROM matches m
                JOIN jobs j ON j.id = m.job_id
-               WHERE m.recommendation != 'skip'
+               WHERE m.recommendation NOT IN ('skip', 'track_only')
                  AND j.is_active = 1
                  AND m.issue_created = 0
                ORDER BY m.priority_rank ASC, m.score DESC
@@ -197,14 +214,16 @@ def save_documents(docs: GeneratedDocuments) -> None:
 def get_top_matches(limit: int = 20) -> list[dict]:
     with _conn() as con:
         rows = con.execute(
-            """SELECT m.job_id, m.score, m.reasoning, m.key_matches, m.gaps,
+            """SELECT m.job_id, m.score, m.fit_score, m.competitiveness_score, m.roi_score,
+                      m.reasoning, m.key_matches, m.gaps,
                       m.recommendation, m.executive_summary, m.priority_rank,
+                      m.resume_angles, m.risks, m.outreach_strategy,
                       m.matched_at,
                       j.title, j.company, j.location, j.url, j.salary,
                       j.job_type, j.source, j.remote, j.posted_at
                FROM matches m
                JOIN jobs j ON j.id = m.job_id
-               WHERE m.recommendation != 'skip'
+               WHERE m.recommendation NOT IN ('skip')
                  AND j.is_active = 1
                ORDER BY m.priority_rank ASC, m.score DESC
                LIMIT ?""",
