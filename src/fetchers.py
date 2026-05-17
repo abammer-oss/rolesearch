@@ -614,7 +614,9 @@ def fetch_jsearch(prefs: JobPreferences) -> list[JobPosting]:
     """
     api_key = os.getenv("RAPIDAPI_KEY")
     if not api_key:
+        print("      jsearch: RAPIDAPI_KEY not set — skipping (add secret at github.com/abammer-oss/rolesearch/settings/secrets/actions)")
         return []
+    print("      jsearch: RAPIDAPI_KEY found, querying JSearch API…")
 
     headers = {
         "X-RapidAPI-Key": api_key,
@@ -641,7 +643,7 @@ def fetch_jsearch(prefs: JobPreferences) -> list[JobPosting]:
             r.raise_for_status()
             data = r.json()
         except Exception as exc:
-            logger.warning("JSearch failed for '%s': %s", query, exc)
+            print(f"      jsearch: query '{query}' failed — {exc}")
             continue
 
         for j in data.get("data", []):
