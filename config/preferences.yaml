@@ -1,36 +1,98 @@
 # ──────────────────────────────────────────────────────────────────────────────
 #  ANTHONY BAMMER — Job Search Preferences
-#  Executive-level | Social Impact | Philanthropy | Funding Strategy | Advisory
+#  Six role families | Remote / Atlanta / Southeast / Hybrid
 # ──────────────────────────────────────────────────────────────────────────────
 
-# Roles aligned with Managing Partner / Strategic Advisor background
-job_titles:
-  - Chief Development Officer
-  - Vice President of Philanthropy
-  - Chief Impact Officer
-  - VP of Strategic Partnerships
-  - Managing Director
-  - Director of Strategic Partnerships
-  - VP of Social Impact
-  - Chief Strategy Officer
-  - Director of Development
-  - Executive Director
-  - VP of Government Relations
-  - Head of Philanthropy
-  - Director of Federal Funding
-  - Senior Advisor
-  - Principal
-  - VP of Nonprofit Strategy
-  - Director of Capital Strategy
-  - Chief Operating Officer
-  - VP of Community Impact
+# ── 1. Philanthropy Strategy / Advisory ──────────────────────────────────────
+# ── 2. Nonprofit Executive / Growth Leadership ───────────────────────────────
+# ── 3. Government Funding / Grants / Public Sector Strategy ─────────────────
+# ── 4. Strategic Finance / Capital Strategy / Blended Finance ────────────────
+# ── 5. Healthcare Strategy / Partnerships / Operations ───────────────────────
+# ── 6. Business Transformation / AI / Operational Strategy ───────────────────
 
-# Preferred work locations — Atlanta-based or remote executive roles
+job_titles:
+  # Family 1 — Philanthropy Strategy / Advisory
+  - Principal Philanthropy Advisor
+  - Director of Philanthropic Strategy
+  - Senior Director of Philanthropic Strategy
+  - Director of Social Impact Strategy
+  - Director of Foundation Strategy
+  - Director of Grantmaking Strategy
+  - Director of Strategic Initiatives Philanthropy
+  - Director of Funder Partnerships
+  - Chief Philanthropy Officer
+  - Vice President of Philanthropy
+  - Head of Philanthropy
+
+  # Family 2 — Nonprofit Executive / Growth Leadership
+  - Executive Director
+  - Managing Director
+  - Chief Development Officer
+  - VP of Development
+  - VP of Advancement
+  - Senior Director of Development
+  - Director of Growth
+  - Director of Resource Development
+  - Director of Institutional Giving
+  - Director of Foundation Relations
+  - Director of Strategic Partnerships
+  - Chief Impact Officer
+  - VP of Social Impact
+
+  # Family 3 — Government Funding / Grants / Public Sector Strategy
+  - Director of Government Funding
+  - Director of Public Sector Strategy
+  - Director of Grants Strategy
+  - Director of Federal Funding
+  - Director of Government Partnerships
+  - Director of Public-Private Partnerships
+  - Director of Sponsored Programs
+  - Senior Director of Grants and Contracts
+  - VP Government Grants
+  - Director of Federal Relations
+  - Director of Grant Programs
+
+  # Family 4 — Strategic Finance / Capital Strategy / Blended Finance
+  - Director of Strategic Finance
+  - Director of Capital Strategy
+  - Director of Fund Design
+  - Director of Investment Strategy
+  - Director of Financial Planning and Strategy
+  - VP of Strategic Finance
+  - Director of Impact Investing
+  - Director of Community Development Finance
+  - Director of Blended Finance
+  - Managing Director Capital Strategy
+
+  # Family 5 — Healthcare Strategy / Partnerships / Operations
+  - Director of Healthcare Strategy
+  - Director of Strategic Partnerships Healthcare
+  - Director of Behavioral Health Strategy
+  - Director of Value-Based Care Strategy
+  - Director of Program Growth
+  - Senior Director Strategy and Innovation
+  - VP Strategy and Operations
+  - Chief Operating Officer
+
+  # Family 6 — Business Transformation / AI / Operational Strategy
+  - Business Transformation Lead
+  - Director of Transformation
+  - Director of Strategic Initiatives
+  - Director of Innovation
+  - Director of Operating Strategy
+  - Director of Change Management
+  - Director of AI Transformation
+  - Senior Director Business Operations
+  - Chief Strategy Officer
+  - VP of Strategy
+
+# Preferred locations — remote-first; open to Atlanta metro, Southeast, DC, NY
 locations:
   - Remote
   - Atlanta, GA
   - Washington, DC
   - New York, NY
+  - Southeast
 
 # Employment types
 job_types:
@@ -50,23 +112,38 @@ industries:
   - behavioral health
   - foundation
   - policy
+  - impact investing
+  - public sector
+  - education
+  - housing
 
-# Minimum annual salary (executive-level)
-salary_min: 130000
+# Salary floor — roles below this are deprioritised or skipped
+salary_min: 125000
 
-# Keywords that should be present in a strong match
+# Transferable-skill keywords that signal a strong-fit description
 keywords:
   - federal funding
   - nonprofit
   - philanthropy
   - capital strategy
   - social impact
-  - grant
+  - grant strategy
   - community development
   - strategic partnerships
-  - fundraising
+  - fundraising strategy
+  - stakeholder alignment
+  - executive leadership
+  - board engagement
+  - financial modeling
+  - program growth
+  - operational transformation
+  - cross-functional leadership
+  - blended finance
+  - public-private partnership
+  - impact investing
+  - funder engagement
 
-# Anything here disqualifies a posting automatically
+# Auto-disqualifiers — any of these in the posting → skip
 deal_breakers:
   - entry-level
   - junior
@@ -78,11 +155,18 @@ deal_breakers:
   - adult content
   - MLM
   - commission-only
+  - quota-carrying
+  - base plus commission
+  - sales quota
+  - CPA required
+  - CFA required
+  - licensed accountant required
+  - clinical license required
 
 # Companies / orgs to skip
 excluded_companies: []
 
-# Minimum AI match score (0–100) to surface in results
+# Minimum composite AI match score (0–100) to surface in results
 min_match_score: 60
 
 # How many top matches get auto-generated tailored resume + cover letter

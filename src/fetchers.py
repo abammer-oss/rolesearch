@@ -156,9 +156,19 @@ def fetch_adzuna(prefs: JobPreferences) -> list[JobPosting]:
         "Referer": referrer,
     })
 
+    # Sample one title from each role family to broaden coverage
+    _ADZUNA_TARGETS = [
+        "Director Philanthropic Strategy",
+        "Chief Development Officer",
+        "Director Federal Funding",
+        "Director Capital Strategy",
+        "Director Healthcare Strategy",
+        "Director Transformation",
+    ]
+
     jobs: list[JobPosting] = []
     country = "us"
-    for title in prefs.job_titles[:2]:
+    for title in _ADZUNA_TARGETS:
         params = {
             "app_id": app_id,
             "app_key": app_key,
@@ -219,6 +229,9 @@ _MUSE_CATEGORIES = [
     "Business Development",
     "Strategy",
     "Project & Program Management",
+    "Healthcare",
+    "Finance",
+    "Policy",
 ]
 
 _MUSE_LEVELS = ["Senior Level", "Management", "Director", "Executive"]
@@ -601,14 +614,29 @@ def fetch_usajobs(prefs: JobPreferences) -> list[JobPosting]:
 # ── JSearch on RapidAPI (aggregates Google Jobs / Indeed / LinkedIn) ────────────────
 
 _JSEARCH_QUERIES = [
-    "Chief Development Officer nonprofit",
-    "Vice President Philanthropy",
-    "Executive Director nonprofit social impact",
-    "Director of Development nonprofit",
-    "Chief Impact Officer",
-    "Managing Director nonprofit",
-    "VP Strategic Partnerships nonprofit",
-    "Director Federal Grants nonprofit",
+    # Family 1 — Philanthropy Strategy / Advisory
+    "Director Philanthropic Strategy nonprofit remote",
+    "Philanthropy Advisor Director social impact foundation",
+    "Director Funder Partnerships grantmaking strategy",
+
+    # Family 2 — Nonprofit Executive / Growth Leadership
+    "Chief Development Officer nonprofit social impact",
+    "Executive Director nonprofit community development",
+    "VP Development Advancement Director nonprofit",
+    "Director Institutional Giving Foundation Relations nonprofit",
+
+    # Family 3 — Government Funding / Grants / Public Sector
+    "Director Federal Funding Government Grants nonprofit",
+    "Director Public-Private Partnerships Sponsored Programs",
+
+    # Family 4 — Strategic Finance / Capital Strategy
+    "Director Capital Strategy Impact Investing blended finance",
+
+    # Family 5 — Healthcare Strategy / Partnerships
+    "Director Healthcare Strategy Behavioral Health partnerships",
+
+    # Family 6 — Business Transformation / Operational Strategy
+    "Director Transformation Strategic Initiatives nonprofit social impact",
 ]
 
 
@@ -633,7 +661,7 @@ def fetch_jsearch(prefs: JobPreferences) -> list[JobPosting]:
     jobs: list[JobPosting] = []
     seen: set[str] = set()
 
-    for query in _JSEARCH_QUERIES[:5]:  # 5 queries × ~10 results = ~50 jobs
+    for query in _JSEARCH_QUERIES:  # 12 queries × ~10 results = ~120 jobs
         params = {
             "query": query,
             "page": "1",
