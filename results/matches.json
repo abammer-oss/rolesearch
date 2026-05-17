@@ -1,5 +1,5 @@
 {
-  "exported_at": "2026-05-17T08:37:05.374946+00:00",
+  "exported_at": "2026-05-17T15:44:13.627010+00:00",
   "matches": [
     {
       "job_id": "1e4225661f48939a49239782ec8ef3aa",
@@ -67,6 +67,40 @@
       "remote": 0,
       "posted_at": "2026-05-02T00:14:16Z",
       "description": "Do you want to make a difference in the lives of families facing homelessness? Do you thrive in roles where strategy, relationships, and execution come together to drive lasting impact? Are you searching for not just a job, but a calling? Door of Hope, a Christian nonprofit that serves families facing homelessness, is looking for a Chief Development Officer (CDO) to lead our fundraising strategy and grow the resources that make our mission possible. In this role, you will lead Door of Hope\u2019s fu\u2026"
+    },
+    {
+      "job_id": "5cfbc19f910e90b8899e0af581cc4fd6",
+      "score": 82,
+      "reasoning": "This Chief Development Officer role at USA Hockey Foundation is a near-perfect match for Anthony's profile. The position directly aligns with his desired titles (CDO, VP of Philanthropy), core competencies (fundraising strategy, funder engagement, philanthropic advisory), and experience leading $50M+ in funding initiatives. Salary ($145k\u2013$165k) exceeds the $130k minimum. The role focuses on fundraising leadership and strategic capital development\u2014Anthony's core expertise. Location (Colorado Springs) is geographically distant from preferred cities (Remote, Atlanta, DC, NYC), which is a minor gap. No deal-breakers identified. USA Hockey Foundation is a legitimate nonprofit with clear social impact (youth sports development), aligning perfectly with Anthony's mission-driven background.",
+      "key_matches": [
+        "Chief Development Officer title\u2014direct match to desired roles",
+        "Fundraising strategy and funder engagement\u2014core expertise",
+        "Nonprofit leadership and governance\u201413+ years experience",
+        "Philanthropy advisory\u2014primary specialization",
+        "Stakeholder alignment and executive relationship management",
+        "Federal funding experience (applicable to nonprofit landscape)",
+        "Grant writing and management background",
+        "Mission-driven organizational context"
+      ],
+      "gaps": [
+        "Location (Colorado Springs) outside preferred regions (no remote option mentioned)",
+        "Sports-specific nonprofit experience not explicitly mentioned in resume",
+        "No visible experience with youth sports/athletic organization funding"
+      ],
+      "recommendation": "apply",
+      "executive_summary": "USA Hockey Foundation is seeking a Chief Development Officer to lead all fundraising operations\u2014this is an exceptional match for Anthony's strategic leadership and philanthropic expertise. With 13+ years building funding infrastructure across nonprofits and $50M in supported initiatives, Anthony's proven ability to design capital strategies, engage funders, and drive mission-aligned growth directly translates to leading this foundation's development agenda. The primary consideration is geography (Colorado Springs vs. preferred Remote/Atlanta/DC/NYC), but the role's strategic fit and salary alignment make this a strong opportunity.",
+      "priority_rank": 1,
+      "matched_at": "2026-05-17 15:43:38",
+      "title": "Chief Development Officer, USA Hockey Foundation",
+      "company": "USA Hockey",
+      "location": "Stratmoor Hills, El Paso County",
+      "url": "https://www.adzuna.com/details/5732294380?utm_medium=api&utm_source=94bfb68c",
+      "salary": "$145,000\u2013$165,000/yr",
+      "job_type": null,
+      "source": "adzuna",
+      "remote": 0,
+      "posted_at": "2026-05-17T05:22:06Z",
+      "description": "We are an equal opportunity employer and all qualified applicants will receive consideration for employment without regard to race, color, religion, national origin, sex, sexual orientation, age, disability, gender identity, marital or veteran status, or any other protected class. Job Title: Chief Development Officer Location: Colorado Springs, Colorado Reports To: Executive Director The Chief Development Officer will lead all aspects of fundraising for The USA Hockey Foundation. This includes:\u2026"
     },
     {
       "job_id": "30a99c1e2b7d877295eb8b6cb04b9330",
