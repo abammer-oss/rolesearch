@@ -176,8 +176,8 @@ def fetch_adzuna(prefs: JobPreferences) -> list[JobPosting]:
             "results_per_page": min(prefs.max_jobs_per_source, 50),
             "content-type": "application/json",
         }
-        if prefs.salary_min:
-            params["salary_min"] = prefs.salary_min
+        # Do NOT pass salary_min — most nonprofits/foundations don't list salary,
+        # so the filter would silently drop valid roles. Salary fit is evaluated by AI scorer.
         for loc in prefs.locations[:1]:
             if loc.lower() != "remote":
                 params["where"] = loc

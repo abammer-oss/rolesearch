@@ -148,6 +148,9 @@ def cmd_ci() -> None:
     # Always export full match catalogue so `generate` works locally without re-running search
     _export_matches_json(get_top_matches(50))
 
+    # Export near-miss jobs (scored 50–59) for local review
+    _export_near_miss_json()
+
     if not new_matches:
         print("\nNothing new to report. All done.")
         return
@@ -185,6 +188,48 @@ def _export_matches_json(rows: list[dict]) -> None:
     path = results_dir / "matches.json"
     path.write_text(json.dumps(out, indent=2, default=str), encoding="utf-8")
     print(f"      Exported {len(enriched)} match(es) → results/matches.json")
+
+
+def _export_near_miss_json() -> None:
+    """Export jobs scored 50–59 (just below threshold) for manual review."""
+    import sqlite3
+    from src.storage import DB_PATH
+
+    try:
+        con = sqlite3.connect(DB_PATH)
+        con.row_factory = sqlite3.Row
+        rows = con.execute(
+            """SELECT m.job_id, m.score, m.fit_score, m.competitiveness_score, m.roi_score,
+                      m.reasoning, m.recommendation,
+                      j.title, j.company, j.location, j.url, j.salary, j.source
+               FROM matches m
+               JOIN jobs j ON j.id = m.job_id
+               WHERE m.score BETWEEN 50 AND 59
+                 AND j.is_active = 1
+               ORDER BY m.score DESC
+               LIMIT 30"""
+        ).fetchall()
+        con.close()
+    except Exception as exc:
+        print(f"      near-miss export skipped: {exc}")
+        return
+
+    if not rows:
+        print("      No near-miss jobs (50–59) to export.")
+        return
+
+    results_dir = Path(__file__).parent / "results"
+    results_dir.mkdir(exist_ok=True)
+    path = results_dir / "near_miss.json"
+    path.write_text(
+        json.dumps(
+            {"exported_at": datetime.now(tz=timezone.utc).isoformat(),
+             "near_miss": [dict(r) for r in rows]},
+            indent=2, default=str,
+        ),
+        encoding="utf-8",
+    )
+    print(f"      Exported {len(rows)} near-miss job(s) (scored 50–59) → results/near_miss.json")
 
 
 def cmd_daemon() -> None:

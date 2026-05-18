@@ -203,7 +203,7 @@ def _build_prompt(prefs: JobPreferences, batch: list[JobPosting]) -> str:
         f"[JOB {i + 1}]\nID: {j.id}\nTitle: {j.title}\nCompany: {j.company}\n"
         f"Location: {j.location}\nType: {j.job_type or 'N/A'}\nSalary: {j.salary or 'Not listed'}\n"
         f"Tags: {', '.join(j.tags) if j.tags else 'N/A'}\n"
-        f"Description:\n{j.description[:800]}"
+        f"Description:\n{j.description[:1500]}"
         for i, j in enumerate(batch)
     )
 
@@ -373,6 +373,24 @@ def match_jobs(
         if r.score >= prefs.min_match_score and r.recommendation != "skip"
     ]
     filtered.sort(key=lambda r: (r.priority_rank, -r.score))
+
+    # Score distribution — helps diagnose whether jobs are found but scoring low
+    bands = {"80+": 0, "70-79": 0, "60-69": 0, "50-59": 0, "<50": 0}
+    for r in all_results:
+        if r.score >= 80:
+            bands["80+"] += 1
+        elif r.score >= 70:
+            bands["70-79"] += 1
+        elif r.score >= 60:
+            bands["60-69"] += 1
+        elif r.score >= 50:
+            bands["50-59"] += 1
+        else:
+            bands["<50"] += 1
+    dist = "  ".join(f"{k}: {v}" for k, v in bands.items())
+    print(f"      Score distribution ({len(all_results)} scored): {dist}")
+    print(f"      Above threshold ({prefs.min_match_score}+): {len(filtered)} jobs surfaced")
+
     logger.info(
         "matched %d / %d jobs above score threshold %d",
         len(filtered), len(all_results), prefs.min_match_score,
