@@ -70,7 +70,7 @@ def fetch_arbeitnow(prefs: JobPreferences) -> list[JobPosting]:
 
 def fetch_remotive(prefs: JobPreferences) -> list[JobPosting]:
     jobs: list[JobPosting] = []
-    for title in prefs.job_titles[:3]:
+    for title in prefs.job_titles[:8]:
         data = _get(
             "https://remotive.com/api/remote-jobs",
             {"search": title, "limit": prefs.max_jobs_per_source},
@@ -412,11 +412,29 @@ def fetch_chronicle(prefs: JobPreferences) -> list[JobPosting]:
 # ── Indeed RSS (may be Cloudflare-blocked from cloud IPs) ──────────────────────────
 
 _INDEED_SEARCHES = [
-    ("chief development officer nonprofit", "remote"),
+    # Family 1 — Philanthropy
+    ("director philanthropic strategy", "remote"),
     ("vice president philanthropy", "remote"),
+    ("director funder engagement grantmaking", "remote"),
+    # Family 2 — Nonprofit Executive
+    ("chief development officer nonprofit", "remote"),
     ("executive director nonprofit", "Atlanta, GA"),
-    ("director of development nonprofit", "remote"),
-    ("chief impact officer", "remote"),
+    ("director institutional giving foundation", "remote"),
+    ("chief impact officer nonprofit", "remote"),
+    # Family 3 — Government / Grants
+    ("director federal funding grants nonprofit", "remote"),
+    ("director public private partnerships", "remote"),
+    ("director sponsored programs federal grants", "remote"),
+    # Family 4 — Capital Strategy
+    ("director impact investing blended finance", "remote"),
+    ("director community development finance", "remote"),
+    # Family 5 — Healthcare Strategy
+    ("director healthcare strategy partnerships", "remote"),
+    ("director behavioral health strategy nonprofit", "remote"),
+    # Family 6 — Transformation / Strategy
+    ("director strategic initiatives nonprofit", "remote"),
+    ("chief strategy officer nonprofit", "remote"),
+    ("director transformation nonprofit", "remote"),
 ]
 
 
@@ -618,25 +636,54 @@ _JSEARCH_QUERIES = [
     "Director Philanthropic Strategy nonprofit remote",
     "Philanthropy Advisor Director social impact foundation",
     "Director Funder Partnerships grantmaking strategy",
+    "Chief Philanthropy Officer foundation giving",
+    "Vice President Philanthropy social impact remote",
+    "Director Social Impact Strategy corporate foundation",
+    "Director Foundation Relations grantmaking nonprofit",
 
     # Family 2 — Nonprofit Executive / Growth Leadership
     "Chief Development Officer nonprofit social impact",
     "Executive Director nonprofit community development",
     "VP Development Advancement Director nonprofit",
     "Director Institutional Giving Foundation Relations nonprofit",
+    "Managing Director nonprofit growth leadership",
+    "Chief Impact Officer social enterprise nonprofit",
+    "Senior Director Development nonprofit fundraising strategy",
+    "Director Strategic Partnerships nonprofit mission",
 
     # Family 3 — Government Funding / Grants / Public Sector
     "Director Federal Funding Government Grants nonprofit",
     "Director Public-Private Partnerships Sponsored Programs",
+    "Director Grants Strategy federal funding nonprofit",
+    "Senior Director Grants Contracts sponsored programs",
+    "Director Federal Relations government funding strategy",
+    "Director Public Sector Strategy government partnerships",
+    "Director Grant Programs community development funding",
 
     # Family 4 — Strategic Finance / Capital Strategy
     "Director Capital Strategy Impact Investing blended finance",
+    "Director Impact Investing social finance community development",
+    "Director Community Development Finance CDFI lending",
+    "Director Blended Finance capital strategy nonprofit",
+    "VP Strategic Finance nonprofit capital roadmap",
+    "Director Fund Design capital strategy investment",
 
     # Family 5 — Healthcare Strategy / Partnerships
     "Director Healthcare Strategy Behavioral Health partnerships",
+    "VP Strategy Operations healthcare nonprofit",
+    "Director Value-Based Care Strategy partnerships",
+    "Senior Director Strategy Innovation healthcare nonprofit",
+    "Director Behavioral Health Program Strategy community",
+    "Chief Operating Officer healthcare nonprofit strategy",
 
     # Family 6 — Business Transformation / Operational Strategy
     "Director Transformation Strategic Initiatives nonprofit social impact",
+    "Director AI Transformation strategy nonprofit",
+    "Chief Strategy Officer nonprofit social impact",
+    "VP Strategy Operations nonprofit growth",
+    "Director Innovation nonprofit digital transformation",
+    "Director Change Management organizational transformation",
+    "Senior Director Business Operations strategy nonprofit",
 ]
 
 
