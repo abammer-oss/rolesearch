@@ -3,10 +3,13 @@
 rolesearch — AI-powered job search agent
 
 Usage:
-  python main.py search          Fetch fresh jobs, validate, score, and display results
-  python main.py list            Show ranked matches from the database
-  python main.py generate <id>   Generate tailored resume + cover letter for a job
-  python main.py daemon          Run continuously, refreshing every N hours (default: 6)
+  python main.py search                         Fetch fresh jobs, score, and display results
+  python main.py list                           Show ranked matches from the database
+  python main.py generate <id>                  Generate tailored resume + cover letter for a job
+  python main.py ingest <url> [url2 ...]        Manually ingest URLs through full pipeline
+  python main.py ingest --file urls.txt         Ingest URLs from a file (one per line)
+  python main.py ingest --dry-run <url>         Parse + score only; no documents generated
+  python main.py daemon                         Run continuously, refreshing every N hours
 """
 
 from __future__ import annotations
@@ -162,6 +165,169 @@ def cmd_ci() -> None:
         mark_issue_created(m["job_id"])
 
     print(f"\nDone — {created} issue(s) opened.")
+
+
+def cmd_ingest(raw_args: list[str]) -> None:
+    """
+    Manually ingest one or more job URLs through the full evaluation + drafting pipeline.
+
+    Usage:
+      python main.py ingest <url> [url2 ...]
+      python main.py ingest --file urls.txt
+      python main.py ingest --stdin
+      python main.py ingest --dry-run <url> [url2 ...]
+
+    Options:
+      --dry-run           Parse and score only; do not generate documents
+      --priority high     Tag all jobs as high priority in dashboard/tracker
+      --company-notes TEXT  Extra context appended to the JD before scoring
+      --file PATH         Read URLs (one per line) from a file
+      --stdin             Read URLs from stdin (one per line)
+    """
+    import anthropic
+    from agent import load_preferences, load_resume, _make_client
+    from src.ingester import ingest_batch
+    from src.matcher import score_batch
+    from src.generator import generate_documents
+    from src.run_writer import make_run_dir, write_job_artifacts, write_dashboard, append_tracker
+    from src.storage import init_db
+
+    # ── Parse flags ──────────────────────────────────────────────────────────
+    dry_run = "--dry-run" in raw_args
+    priority_override = None
+    company_notes = ""
+    urls: list[str] = []
+
+    i = 0
+    args = [a for a in raw_args if a != "--dry-run"]
+    while i < len(args):
+        a = args[i]
+        if a == "--priority" and i + 1 < len(args):
+            priority_override = args[i + 1]
+            i += 2
+        elif a == "--company-notes" and i + 1 < len(args):
+            company_notes = args[i + 1]
+            i += 2
+        elif a == "--file" and i + 1 < len(args):
+            path = Path(args[i + 1])
+            if not path.exists():
+                console.print(f"[red]File not found: {path}[/]")
+                sys.exit(1)
+            urls.extend(u.strip() for u in path.read_text().splitlines() if u.strip())
+            i += 2
+        elif a == "--stdin":
+            import sys as _sys
+            urls.extend(u.strip() for u in _sys.stdin.read().splitlines() if u.strip())
+            i += 1
+        elif a.startswith("http"):
+            urls.append(a)
+            i += 1
+        else:
+            console.print(f"[yellow]Ignoring unrecognised argument: {a}[/]")
+            i += 1
+
+    if not urls:
+        console.print("[red]No URLs provided. Usage: python main.py ingest <url> [url2 ...][/]")
+        sys.exit(1)
+
+    if len(urls) > 25:
+        console.print(f"[yellow]Batch capped at 25 URLs. Truncating from {len(urls)}.[/]")
+        urls = urls[:25]
+
+    console.print(f"\n[bold cyan]Ingest run — {len(urls)} URL(s){'  [DRY RUN]' if dry_run else ''}[/]")
+    if priority_override:
+        console.print(f"  Priority override: [bold]{priority_override}[/]")
+    if company_notes:
+        console.print(f"  Company notes: [dim]{company_notes}[/]")
+
+    # ── Setup ──────────────────────────────────────────────────────────────────
+    init_db()
+    resume = load_resume()
+    prefs = load_preferences()
+    client = _make_client()
+    run_dir = make_run_dir()
+
+    # ── Stage 1: Ingest & Parse ───────────────────────────────────────────────
+    console.print("\n[1/3] Fetching and parsing job descriptions…")
+    jobs, failures = ingest_batch(urls, client, company_notes=company_notes)
+
+    console.print(f"      Parsed: [green]{len(jobs)}[/]  Failed: [{'red' if failures else 'dim'}]{len(failures)}[/]")
+    for f in failures:
+        console.print(f"      [red]✗[/] {f['url']}\n        [dim]{f['error']}[/]")
+
+    if not jobs:
+        console.print("[red]No jobs could be parsed. Exiting.[/]")
+        sys.exit(1)
+
+    # ── Stage 2: Score ─────────────────────────────────────────────────────────
+    console.print("\n[2/3] Scoring with Claude…")
+    matches = score_batch(resume, prefs, jobs, client)
+    match_by_id = {m.job_id: m for m in matches}
+
+    # Jobs Claude didn't return (shouldn't happen, but handle gracefully)
+    from src.models import MatchResult as MR
+    for job in jobs:
+        if job.id not in match_by_id:
+            match_by_id[job.id] = MR(
+                job_id=job.id, score=0, reasoning="No score returned.",
+                key_matches=[], gaps=[], recommendation="skip",
+            )
+    matches = list(match_by_id.values())
+
+    # ── Stage 3: Generate documents (skip if dry-run) ──────────────────────────
+    docs_map: dict[str, object] = {}
+    if dry_run:
+        console.print("\n[3/3] [dim]DRY RUN — skipping document generation[/]")
+    else:
+        console.print(f"\n[3/3] Generating resume + cover letter drafts…")
+        for job in jobs:
+            m = match_by_id[job.id]
+            if m.recommendation == "skip" and priority_override != "high":
+                console.print(f"      [dim]Skip (scored {m.score}): {job.title} @ {job.company}[/]")
+                continue
+            try:
+                docs = generate_documents(resume, job, client)
+                docs_map[job.id] = docs
+                console.print(f"      [green]✓[/] {job.title} @ {job.company}  (score {m.score})")
+            except Exception as exc:
+                console.print(f"      [red]✗[/] {job.title} @ {job.company}: {exc}")
+
+    # ── Write output ────────────────────────────────────────────────────────────
+    for job in jobs:
+        write_job_artifacts(
+            run_dir, job, match_by_id[job.id],
+            docs_map.get(job.id),
+            priority_override=priority_override,
+        )
+
+    dashboard_path = write_dashboard(
+        run_dir, jobs, matches, failures,
+        dry_run=dry_run, priority_override=priority_override,
+    )
+    if not dry_run:
+        append_tracker(jobs, matches, priority_override=priority_override)
+
+    # ── Summary ─────────────────────────────────────────────────────────────────
+    console.print()
+    _display_ranked([
+        {**vars(m), "title": j.title, "company": j.company,
+         "location": j.location, "salary": j.salary, "url": j.url,
+         "source": j.source, "remote": j.remote, "posted_at": j.posted_at,
+         "key_matches": json.dumps(m.key_matches),
+         "gaps": json.dumps(m.gaps),
+         "resume_angles": json.dumps(m.resume_angles),
+         "risks": json.dumps(m.risks),
+         }
+        for j, m in [(j, match_by_id[j.id]) for j in jobs]
+        if match_by_id[j.id].recommendation != "skip" or priority_override == "high"
+    ])
+
+    console.print(f"\n[bold green]Run complete.[/]")
+    console.print(f"  Dashboard: [bold]{dashboard_path}[/]")
+    console.print(f"  Run folder: [bold]{run_dir}[/]")
+    if not dry_run:
+        from src.run_writer import TRACKER_CSV
+        console.print(f"  Tracker: [bold]{TRACKER_CSV}[/]")
 
 
 def _export_matches_json(rows: list[dict]) -> None:
@@ -517,6 +683,8 @@ def main() -> None:
         cmd_generate(args[1])
     elif cmd == "daemon":
         cmd_daemon()
+    elif cmd == "ingest":
+        cmd_ingest(args[1:])
     elif cmd == "ci":
         cmd_ci()
     else:
