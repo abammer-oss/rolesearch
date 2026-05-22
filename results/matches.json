@@ -1,6 +1,44 @@
 {
-  "exported_at": "2026-05-21T18:35:46.309647+00:00",
+  "exported_at": "2026-05-22T10:45:39.544527+00:00",
   "matches": [
+    {
+      "job_id": "766ddcd36faddc4e1b5bc5c2422da607",
+      "score": 83,
+      "fit_score": 88,
+      "competitiveness_score": 72,
+      "roi_score": 90,
+      "reasoning": "Magic Cabinet's Director of Philanthropic Solutions is a near-perfect lane match: the role is explicitly about aggregating aligned philanthropic capital, grantmaking strategy, and funder engagement \u2014 all of Anthony's highest-evidence strengths. His $50M+ in funding initiatives, blended capital architecture work ($8.9M recovery housing, $8M rural wastewater), and philanthropy advisory experience are direct proof points. The $190K\u2013$210K salary is well above his floor and represents meaningful upside. The competitiveness score is tempered by the CA/WA residency requirement (he's in Atlanta) and the fact that this is a well-funded foundation likely drawing a deep national applicant pool.",
+      "key_matches": [
+        "$50M+ in funding initiatives supported \u2014 direct evidence of philanthropic capital strategy at scale",
+        "$8.9M blended capital architecture (recovery housing) and $8M rural wastewater \u2014 capital aggregation and blended finance proof points",
+        "Philanthropy strategy and funder engagement as core advisory service lane",
+        "Nonprofit Founder + Executive Director (G1VE Atlanta) \u2014 grantmaker-side credibility",
+        "Grant Reviewer, National CASA/GAL Association \u2014 evaluates national program proposals, signals funder-side fluency"
+      ],
+      "gaps": [
+        "CA/WA residency explicitly required \u2014 Anthony is Atlanta-based, which may be a hard screen-out",
+        "No direct evidence of DAF operations or managing a private foundation's grantmaking portfolio internally",
+        "Role likely draws a very competitive national applicant pool given $190K\u2013$210K salary and mission brand",
+        "No explicit prior experience working inside a philanthropic foundation (he advises them, not works within them)"
+      ],
+      "recommendation": "outreach_first",
+      "executive_summary": "Magic Cabinet is a private philanthropic foundation redefining how philanthropy and nonprofits partner for community sustainability \u2014 and this Director role owns the strategy to aggregate aligned philanthropic capital and move it into communities. Anthony's $50M+ in funding initiatives supported, blended capital architecture for recovery housing and rural infrastructure, and philanthropy advisory track record make him a genuinely strong lane match. The hard barrier is the CA/WA residency requirement; he should verify whether this is firm before investing application effort.",
+      "priority_rank": 2,
+      "resume_angles": "[\"Lead with blended capital architecture: the $8.9M recovery housing and $8M rural wastewater deals demonstrate exactly the kind of capital aggregation and community investment alignment this role requires\", \"Position the $50M+ in funding initiatives as evidence of funder ecosystem navigation at scale \\u2014 federal, state, and private philanthropic capital simultaneously\", \"Frame G1VE Atlanta ED + National CASA grant reviewer experience as dual-sided philanthropic fluency (grantee + evaluator perspectives)\"]",
+      "risks": "[\"CA/WA residency requirement is an explicit filter \\u2014 apply only after confirming remote/Atlanta eligibility or willingness to relocate\", \"Private foundation internal roles often prefer candidates with prior foundation staff experience; his is advisory/external-facing\", \"Highly competitive applicant pool for a $190K\\u2013$210K mission-brand role at a well-resourced foundation\"]",
+      "outreach_strategy": "Before applying, identify Magic Cabinet's current staff on LinkedIn (program officers, ED, or board-adjacent advisors) and send a concise warm message referencing his blended capital and philanthropic strategy work. Frame the angle as: 'I've spent 6+ years at the intersection of philanthropic capital aggregation and community investment \u2014 including $8.9M blended capital structures and supporting $50M+ in cross-sector funding initiatives. I'd love to learn more about how Magic Cabinet is thinking about this Director role.' A warm intro via GA Giving Leadership Council or United Way VIP network contacts who may have Bay Area philanthropy connections would be high-value.",
+      "matched_at": "2026-05-22 10:44:58",
+      "title": "Director of Philanthropic Solutions",
+      "company": "Magic Cabinet",
+      "location": "Panhandle, San Francisco",
+      "url": "https://www.adzuna.com/details/5737316387?utm_medium=api&utm_source=94bfb68c",
+      "salary": "$190,000\u2013$210,000/yr",
+      "job_type": null,
+      "source": "adzuna",
+      "remote": 0,
+      "posted_at": "2026-05-22T01:29:47Z",
+      "description": "Director of Philanthropic Solutions Full-time, exempt $190,000-$210,000 Candidate must live in the Washington or California to be eligible. Magic Cabinet (\"MC\") is a philanthropic foundation that seeks to fundamentally redefine how philanthropy and nonprofits partner for sustainable and thriving communities. We\u2019re looking for a Director of Philanthropic Solutions to lead Magic Cabinet's strategy to aggregate aligned philanthropic capital and move it into community with support from our grantmak\u2026"
+    },
     {
       "job_id": "aa51b8044e1bf587b898d94b1627ffd6",
       "score": 68,
