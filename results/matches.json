@@ -1,6 +1,44 @@
 {
-  "exported_at": "2026-05-23T20:35:25.849916+00:00",
+  "exported_at": "2026-05-24T09:15:54.878528+00:00",
   "matches": [
+    {
+      "job_id": "9f5a151390849afd12af0af22586c5f2",
+      "score": 70,
+      "fit_score": 72,
+      "competitiveness_score": 63,
+      "roi_score": 75,
+      "reasoning": "The CDO role at BGCSC is a genuine lane match on nonprofit executive leadership, strategic partnerships, and institutional funding strategy \u2014 Anthony's $50M+ in funding initiatives and $500K federal grant as an ED are directly relevant. However, this role at a $27M organization with 29 Clubs and 44 sites will likely expect deep major gifts portfolio ownership and a proven individual donor development track record, which is his documented weak lane. The salary range ($135K\u2013$165K) meets his floor and offers upside. Competitiveness is meaningfully reduced because CDO at a scaled youth-serving organization will screen for major gifts cultivation experience and a personal donor network \u2014 areas where Anthony has limited documented evidence.",
+      "key_matches": [
+        "$500K competitive FTA federal grant secured as Executive Director \u2014 directly relevant to institutional funding leadership",
+        "$50M+ in funding initiatives across federal, state, and private sources \u2014 demonstrates breadth of funding strategy",
+        "Nonprofit Founder + Executive Director at G1VE Atlanta \u2014 peer-level executive experience in mission-driven org",
+        "United Way VIP Board Leadership Development and GA Giving Leadership Council \u2014 funder-side credibility",
+        "National CASA/GAL Grant Reviewer \u2014 demonstrates evaluative understanding of grant strategy at national level"
+      ],
+      "gaps": [
+        "No documented major gifts or principal gifts portfolio ownership \u2014 likely the primary screening filter for a $27M org CDO",
+        "BGCSC operates 29 Clubs + 15 sites; Anthony has not directly operated at this organizational scale",
+        "No evidence of managing a development team \u2014 CDO role will require leading development staff",
+        "Youth development / Boys & Girls Club sector expertise not present in his background"
+      ],
+      "recommendation": "track_only",
+      "executive_summary": "Boys & Girls Clubs of Snohomish County is a scaled, mission-driven youth development org with $27M in annual revenue across 29 Clubs. The CDO leads the full development function, which at this org size typically means major gifts, institutional grants, corporate partnerships, and planned giving. Anthony's proof points in institutional funding strategy, federal grant execution ($500K FTA grant), and nonprofit executive leadership (G1VE Atlanta ED) are genuine assets, but the CDO function at a $27M organization will heavily weight major gifts portfolio ownership and an established donor network \u2014 his documented gap.",
+      "priority_rank": 3,
+      "resume_angles": "[\"Lead with $50M+ in funding initiatives supported across federal, state, and private sources \\u2014 positions him as a funding strategist, not just a grant writer\", \"Frame G1VE Atlanta ED experience as cross-sector funder engagement: secured $500K competitive federal grant, built public-private partnerships in transit and community development\", \"Highlight United Way VIP Board Leadership and GA Giving Leadership Council as evidence of donor-community credibility and philanthropic ecosystem access in the Southeast\"]",
+      "risks": "[\"Major gifts portfolio ownership is likely a hard screening filter \\u2014 expect to be asked for specific donor cultivation and ask examples\", \"Snohomish County, WA location \\u2014 if not fully remote, this is a relocation ask; confirm remote/hybrid policy before applying\", \"Competing against candidates with 10+ years in youth development or established CDO track records at comparable-sized nonprofits\"]",
+      "outreach_strategy": "Before applying cold, identify BGCSC's current CEO or Board Chair on LinkedIn. Frame outreach around your cross-sector funding architecture experience ($50M+ in funding initiatives, federal + blended capital) and your genuine interest in scaling a youth development organization's revenue diversity beyond traditional major gifts. Reference shared network connections through United Way or GA Giving Leadership Council if possible. This angle differentiates Anthony from pure development track candidates and positions him as a strategic revenue architect.",
+      "matched_at": "2026-05-24 09:15:11",
+      "title": "Chief Development Officer",
+      "company": "Snohomish County Boys And Girls Club",
+      "location": "Pinehurst, Snohomish County",
+      "url": "https://www.adzuna.com/details/5739596526?utm_medium=api&utm_source=94bfb68c",
+      "salary": "$135,000\u2013$165,000/yr",
+      "job_type": null,
+      "source": "adzuna",
+      "remote": 0,
+      "posted_at": "2026-05-24T04:31:56Z",
+      "description": "About Boys & Girls Clubs of Snohomish County BGCSC is a mission-driven youth development organization serving young people and families across Snohomish County. With an 80-year history, approximately $27M in annual revenue, 29 Clubs, and 15 extension sites, BGCSC combines program excellence with strong community partnerships to ensure every Club member has access to safe spaces, caring adults, and opportunities to learn, grow, and lead. Position Summary The Chief Development Officer (CDO) is an\u2026"
+    },
     {
       "job_id": "aa51b8044e1bf587b898d94b1627ffd6",
       "score": 68,
