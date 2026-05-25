@@ -1,6 +1,14 @@
 name: Ingest Job URL
 
 on:
+  # Triggered automatically when Claude writes to ingest-queue.json
+  push:
+    paths:
+      - "ingest-queue.json"
+    branches:
+      - main
+
+  # Also available as a manual form in the Actions tab
   workflow_dispatch:
     inputs:
       job_urls:
@@ -43,17 +51,39 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
-      - name: Write URLs to file
-        run: printf '%s\n' "${{ inputs.job_urls }}" > /tmp/ingest_urls.txt
+      - name: Resolve inputs
+        id: resolve
+        run: |
+          if [ "${{ github.event_name }}" = "push" ]; then
+            # Read from ingest-queue.json committed by Claude
+            URLS=$(jq -r '.urls | join("\n")' ingest-queue.json)
+            DRY_RUN=$(jq -r '.dry_run // false' ingest-queue.json)
+            PRIORITY=$(jq -r '.priority // "normal"' ingest-queue.json)
+            NOTES=$(jq -r '.company_notes // ""' ingest-queue.json)
+          else
+            # Manual workflow_dispatch form
+            URLS="${{ inputs.job_urls }}"
+            DRY_RUN="${{ inputs.dry_run }}"
+            PRIORITY="${{ inputs.priority }}"
+            NOTES="${{ inputs.company_notes }}"
+          fi
+          printf '%s\n' "$URLS" > /tmp/ingest_urls.txt
+          echo "dry_run=$DRY_RUN"   >> $GITHUB_OUTPUT
+          echo "priority=$PRIORITY" >> $GITHUB_OUTPUT
+          {
+            echo "notes<<EOF"
+            echo "$NOTES"
+            echo "EOF"
+          } >> $GITHUB_OUTPUT
 
       - name: Run ingest pipeline
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-          INGEST_COMPANY_NOTES: ${{ inputs.company_notes }}
+          INGEST_COMPANY_NOTES: ${{ steps.resolve.outputs.notes }}
         run: |
           ARGS="--file /tmp/ingest_urls.txt"
-          [ "${{ inputs.dry_run }}" = "true" ]    && ARGS="$ARGS --dry-run"
-          [ "${{ inputs.priority }}" = "high" ]   && ARGS="$ARGS --priority high"
+          [ "${{ steps.resolve.outputs.dry_run }}" = "true" ] && ARGS="$ARGS --dry-run"
+          [ "${{ steps.resolve.outputs.priority }}" = "high" ] && ARGS="$ARGS --priority high"
           python main.py ingest $ARGS
 
       - name: Commit run output
@@ -62,6 +92,6 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add runs/ application-tracker.csv 2>/dev/null || true
           git diff --staged --quiet && echo "Nothing to commit." && exit 0
-          RUN_LABEL="${{ inputs.dry_run == 'true' && '[dry-run] ' || '' }}"
-          git commit -m "chore: ingest run ${RUN_LABEL}$(date -u '+%Y-%m-%d %H:%M') [skip ci]"
+          DRY="${{ steps.resolve.outputs.dry_run == 'true' && '[dry-run] ' || '' }}"
+          git commit -m "chore: ingest run ${DRY}$(date -u '+%Y-%m-%d %H:%M') [skip ci]"
           git push
