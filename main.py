@@ -195,7 +195,7 @@ def cmd_ingest(raw_args: list[str]) -> None:
     # ── Parse flags ──────────────────────────────────────────────────────────
     dry_run = "--dry-run" in raw_args
     priority_override = None
-    company_notes = ""
+    company_notes = os.getenv("INGEST_COMPANY_NOTES", "")  # env var takes lowest priority
     urls: list[str] = []
 
     i = 0

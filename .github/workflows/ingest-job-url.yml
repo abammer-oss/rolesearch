@@ -1,0 +1,67 @@
+name: Ingest Job URL
+
+on:
+  workflow_dispatch:
+    inputs:
+      job_urls:
+        description: "Job URL(s) — paste one per line, up to 25"
+        required: true
+        type: string
+      dry_run:
+        description: "Dry run — score only, skip document generation"
+        required: false
+        type: boolean
+        default: false
+      priority:
+        description: "Priority override"
+        required: false
+        type: choice
+        options:
+          - normal
+          - high
+        default: normal
+      company_notes:
+        description: "Optional context about the role (passed to AI scorer)"
+        required: false
+        type: string
+        default: ""
+
+jobs:
+  ingest:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Write URLs to file
+        run: printf '%s\n' "${{ inputs.job_urls }}" > /tmp/ingest_urls.txt
+
+      - name: Run ingest pipeline
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          INGEST_COMPANY_NOTES: ${{ inputs.company_notes }}
+        run: |
+          ARGS="--file /tmp/ingest_urls.txt"
+          [ "${{ inputs.dry_run }}" = "true" ]    && ARGS="$ARGS --dry-run"
+          [ "${{ inputs.priority }}" = "high" ]   && ARGS="$ARGS --priority high"
+          python main.py ingest $ARGS
+
+      - name: Commit run output
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add runs/ application-tracker.csv 2>/dev/null || true
+          git diff --staged --quiet && echo "Nothing to commit." && exit 0
+          RUN_LABEL="${{ inputs.dry_run == 'true' && '[dry-run] ' || '' }}"
+          git commit -m "chore: ingest run ${RUN_LABEL}$(date -u '+%Y-%m-%d %H:%M') [skip ci]"
+          git push
