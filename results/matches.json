@@ -1,5 +1,5 @@
 {
-  "exported_at": "2026-06-11T23:11:06.717901+00:00",
+  "exported_at": "2026-06-12T12:39:32.829775+00:00",
   "matches": [
     {
       "job_id": "9f5a151390849afd12af0af22586c5f2",
@@ -114,44 +114,6 @@
       "remote": 0,
       "posted_at": "2026-05-02T00:14:16Z",
       "description": "Do you want to make a difference in the lives of families facing homelessness? Do you thrive in roles where strategy, relationships, and execution come together to drive lasting impact? Are you searching for not just a job, but a calling? Door of Hope, a Christian nonprofit that serves families facing homelessness, is looking for a Chief Development Officer (CDO) to lead our fundraising strategy and grow the resources that make our mission possible. In this role, you will lead Door of Hope\u2019s fu\u2026"
-    },
-    {
-      "job_id": "ec8c508d2cdd60c000c3af48038fbb25",
-      "score": 61,
-      "fit_score": 65,
-      "competitiveness_score": 55,
-      "roi_score": 62,
-      "reasoning": "Bread for the City is a deeply respected DC-based organization providing direct services to low-income residents, and the $180K\u2013$200K salary is strong. However, the CDO function at a direct-service urban poverty organization of this scale almost certainly centers on major gifts, individual giving, and donor stewardship \u2014 areas where Anthony has no direct portfolio evidence. The DC location also creates geographic friction. His community development background and $50M+ funding experience are genuine signals of mission alignment, but without evidence of managing individual donor relationships at this level, competitiveness is materially reduced.",
-      "key_matches": [
-        "Community development and social impact strategy are core to Anthony's work, directly mirroring Bread for the City's mission",
-        "$50M+ in funding initiatives supported across public and private sources demonstrates relevant scale of development exposure",
-        "$500K competitive federal grant at G1VE Atlanta shows government funding credibility relevant to DC-based advocacy orgs",
-        "Nonprofit Founder + Executive Director experience demonstrates C-suite nonprofit leadership",
-        "Grant Reviewer at National CASA/GAL Association shows peer recognition in the nonprofit funding ecosystem"
-      ],
-      "gaps": [
-        "No evidence of major gifts portfolio management \u2014 the primary function expected of a CDO at an established direct-service nonprofit",
-        "DC-based organization with no remote confirmation; Anthony is Atlanta-based",
-        "No experience in urban poverty services, food assistance, or legal aid funder ecosystems specifically",
-        "Organization has been operating since before 1974 \u2014 likely expects a seasoned CDO with established DC donor relationships"
-      ],
-      "recommendation": "track_only",
-      "executive_summary": "Bread for the City is a well-known Washington, DC direct-services nonprofit fighting poverty through food, medical care, legal services, and community organizing, with a CDO salary of $180K\u2013$200K. The mission aligns with Anthony's community development and social impact background, and the salary is well above his floor. However, a CDO at an established urban services org of this type is almost always expected to manage a major gifts portfolio and lead individual donor campaigns \u2014 the area where Anthony's profile is thinnest \u2014 making this a meaningful stretch.",
-      "priority_rank": 3,
-      "resume_angles": "[\"Lead with $50M+ in blended funding across federal, state, and private sources to establish scale and multi-channel credibility\", \"Highlight community development and behavioral health funding work (8M wastewater, 8.9M recovery housing) to demonstrate direct-service infrastructure alignment\", \"Frame G1VE Atlanta's transit equity and community development mission as authentic alignment with Bread for the City's justice-oriented values\"]",
-      "risks": "[\"CDO at an established DC poverty-services org will almost certainly require an existing network of major donors and DC philanthropic relationships Anthony doesn't have\", \"Geographic location is DC \\u2014 Atlanta-based remote candidate faces real screening friction\", \"Highly competitive role; DC nonprofit CDO market includes candidates with deep individual giving track records\"]",
-      "outreach_strategy": "If pursuing despite the gaps: identify Bread for the City's Executive Director or a board member connected to the Georgia/national philanthropic network on LinkedIn. Lead with the community development justice angle and your authentic alignment with their mission before mentioning the open role.",
-      "matched_at": "2026-05-17 19:30:54",
-      "title": "Chief Development Officer",
-      "company": "Bread For The City",
-      "location": "Washington, D.C., US",
-      "url": "https://www.adzuna.com/details/5720044073?utm_medium=api&utm_source=94bfb68c",
-      "salary": "$180,000\u2013$200,000/yr",
-      "job_type": null,
-      "source": "adzuna",
-      "remote": 0,
-      "posted_at": "2026-05-05T23:04:39Z",
-      "description": "Mission: The mission of Bread for the City is to help Washington, DC residents living with low income to develop the power to determine the future of their own communities. We provide food, clothing, medical care, and legal and social services to reduce the burden of poverty. We seek justice through community organizing and public advocacy. We work to uproot racism, a major cause of poverty. We are committed to treating our clients with the dignity and respect that all people deserve. Position \u2026"
     }
   ]
 }
